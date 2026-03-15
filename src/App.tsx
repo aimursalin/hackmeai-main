@@ -13,11 +13,14 @@ import LeaderLogin from "./pages/LeaderLogin.tsx";
 import LeaderDashboard from "./pages/LeaderDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
+import { InteractiveNebulaShader } from "@/components/ui/liquid-shader";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <InteractiveNebulaShader className="opacity-40" />
       <Toaster />
       <Sonner />
       <BrowserRouter>

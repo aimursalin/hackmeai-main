@@ -123,6 +123,14 @@ export const testimonials: Testimonial[] = [
     quote: "Precision, speed, and beautiful design. That's what you get when you work with this incredibly talented team.",
     color: "from-[#7ee4c2] to-[#45c29a]",
     thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600",
+  },
+  {
+    id: 6,
+    name: "Sarah Chen",
+    role: "CEO @ Stripe",
+    quote: "Working with them transformed our entire brand identity. The attention to detail was exceptional.",
+    color: "from-[#ff9c6a] to-[#ff7d3b]",
+    thumbnail: "https://images.unsplash.com/photo-1701615004837-40d8573b6652?w=900&auto=format&fit=crop&q=60",
   }
 ];
 export interface FAQItem {

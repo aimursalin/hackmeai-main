@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Timeline, TimelineItem } from "@/components/ui/modern-timeline";
 
 const RadarChart = () => {
   const center = 500;
@@ -136,6 +137,44 @@ const RadarChart = () => {
   );
 };
 
+const timelineItems: TimelineItem[] = [
+  {
+    title: "The Genesis",
+    description: "Founded with a vision to eliminate design friction for global founders. Started as a small elite squad of design architects.",
+    date: "Q1 2024",
+    category: "Foundation",
+    status: "completed"
+  },
+  {
+    title: "Dominance Pass Launch",
+    description: "Introduced our signature subscription model, revolutionizing how companies access high-end UI/UX expertise.",
+    date: "Q2 2024",
+    category: "Product",
+    status: "completed"
+  },
+  {
+    title: "Global Connectivity",
+    description: "Expanded our reach across 8+ countries, establishing the 24/7 asynchronous design cycle that defines us today.",
+    date: "Q3 2024",
+    category: "Growth",
+    status: "completed"
+  },
+  {
+    title: "AI Design Integration",
+    description: "Leveraging proprietary AI workflows to accelerate decision architecture while maintaining elite human precision.",
+    date: "Q4 2024",
+    category: "Innovation",
+    status: "current"
+  },
+  {
+    title: "The 3D Frontier",
+    description: "Integrating high-fidelity 3D motion and immersive spatial design into every core engagement.",
+    date: "Q1 2025",
+    category: "Upcoming",
+    status: "upcoming"
+  }
+];
+
 const About = () => {
   return (
     <section id="about" className="py-32 px-6 relative overflow-hidden bg-background">
@@ -146,7 +185,7 @@ const About = () => {
       }} />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -193,6 +232,15 @@ const About = () => {
             
             <RadarChart />
           </motion.div>
+        </div>
+
+        {/* Dynamic Journey Timeline */}
+        <div className="mt-40 border-t border-white/5 pt-32">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">Our Journey</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">From a simple idea to a global platform serving elite founders worldwide.</p>
+          </div>
+          <Timeline items={timelineItems} />
         </div>
       </div>
     </section>

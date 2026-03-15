@@ -1,150 +1,74 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
+import StepCard from "@/components/ui/step-card";
 import { useToast } from "@/hooks/use-toast";
 
 const PortalLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email.trim() || !password.trim()) {
-      toast({
-        title: "Missing fields",
-        description: "Please enter both your email and password.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Mock login — go straight to portal
+  const handleComplete = (data: { email: string; password: string; otp: string }) => {
+    console.log("Portal Login Data:", data);
+    toast({
+      title: "Access Authorized",
+      description: "Welcome back, John. System nominal.",
+    });
     navigate("/portal/dashboard");
   };
 
-  const handleForgotPassword = () => {
-    toast({
-      title: "Reset link sent",
-      description: "If an account exists with that email, you'll receive a reset link shortly.",
-    });
-  };
-
-  const handleRequestInvite = () => {
-    toast({
-      title: "Request received",
-      description: "We'll review your request and get back to you within 24 hours.",
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
-      {/* Ambient glow */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px]" />
-      </div>
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center px-6 overflow-hidden relative selection:bg-accent selection:text-white">
+      {/* Ambient Premium Glows - Matching Hero */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.12)_0%,_transparent_60%)] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-[150px] opacity-40 pointer-events-none" />
+      
+      <div className="w-full max-w-lg relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+          className="text-center mb-12"
+        >
+          {/* Logo / Badge */}
+          <div className="inline-flex items-center gap-2 glass-surface rounded-full px-4 py-1.5 mb-8 border border-white/10">
+            <Shield className="w-3.5 h-3.5 text-accent" />
+            <span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">Secure Gateway</span>
+          </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md relative"
-      >
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          {/* Huge Hero-style Header */}
+          <h1 className="text-5xl md:text-6xl font-bold leading-tight tracking-tighter text-white mb-4">
             DOMINANCE<span className="text-accent">.</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-2">Client Portal</p>
-        </div>
+          <p className="text-lg font-medium text-white/30 tracking-wide uppercase italic">
+             Client <span className="text-white/60">Portal</span>
+          </p>
+        </motion.div>
 
-        {/* Login Card */}
-        <div className="glass-surface rounded-3xl p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Welcome back</h2>
-          <p className="text-sm text-muted-foreground mb-8">Sign in to your workspace</p>
+        {/* The Multi-Step Flow */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <StepCard onComplete={handleComplete} />
+        </motion.div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label htmlFor="login-email" className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Email
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] px-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
-              />
-            </div>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="text-center text-[11px] text-white/20 mt-12 uppercase tracking-[0.4em] font-bold"
+        >
+          Encrypted Biometric Verification Required
+        </motion.p>
+      </div>
 
-            <div>
-              <label htmlFor="login-password" className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="login-password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label htmlFor="remember-me" className="flex items-center gap-2 cursor-pointer">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border border-white/[0.15] bg-white/[0.04] accent-accent cursor-pointer"
-                />
-                <span className="text-xs text-muted-foreground">Remember me</span>
-              </label>
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                className="text-xs text-accent hover:text-accent/80 transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            <Button id="login-submit" type="submit" variant="superior" className="w-full group">
-              Sign In
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Button>
-          </form>
-        </div>
-
-        <p className="text-center text-xs text-muted-foreground/60 mt-6">
-          Don't have access?{" "}
-          <button
-            onClick={handleRequestInvite}
-            className="text-accent hover:text-accent/80 transition-colors"
-          >
-            Request an invite
-          </button>
-        </p>
-      </motion.div>
+      {/* Corporate Branding / Location Info - Matching Hero Vibes */}
+      <div className="absolute bottom-10 left-12 hidden lg:flex items-center gap-3 text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">
+         <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+         Dublin / London / New York Central Gate
+      </div>
     </div>
   );
 };

@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutGrid, Tag, Info, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-
-const navLinks = [
-  { label: "Services", href: "#services" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#about" },
-  { label: "FAQ", href: "#faq" },
-];
+import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -31,9 +25,16 @@ const Navbar = () => {
     }
   };
 
+  const navTabs = [
+    { title: "Services", icon: LayoutGrid, onClick: () => scrollTo("#services") },
+    { title: "Pricing", icon: Tag, onClick: () => scrollTo("#pricing") },
+    { title: "About", icon: Info, onClick: () => scrollTo("#about") },
+    { title: "FAQ", icon: HelpCircle, onClick: () => scrollTo("#faq") },
+  ];
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/60 border-b border-white/[0.04]">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link 
           to="/" 
           className="text-foreground font-semibold tracking-tight text-lg"
@@ -42,31 +43,30 @@ const Navbar = () => {
           Dominance<span className="text-muted-foreground font-light ml-1">Digital</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              onClick={() => scrollTo(link.href)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {link.label}
-            </button>
-          ))}
-          <Link to="/portal">
-            <Button variant="glass" size="sm" className="h-9 px-5 text-xs">
-              Client Portal
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-4">
+          <ExpandableTabs tabs={navTabs} className="bg-transparent border-none p-0" />
+          
+          <div className="h-6 w-px bg-white/10 mx-2" />
+
+          <div className="flex items-center gap-2">
+            <Link to="/portal">
+              <Button variant="glass" size="sm" className="h-9 px-4 text-xs">
+                Client Portal
+              </Button>
+            </Link>
+            <Link to="/portal/admin">
+              <Button variant="glass" size="sm" className="h-9 px-4 text-xs border-accent/20 hover:bg-accent/5">
+                Admin
+              </Button>
+            </Link>
+            <Button variant="superior" size="sm" className="h-9 px-5 text-xs" onClick={() => scrollTo("#pricing")}>
+              Get Started
             </Button>
-          </Link>
-          <Link to="/portal/admin">
-            <Button variant="glass" size="sm" className="h-9 px-5 text-xs border-accent/20 hover:bg-accent/5">
-              Admin
-            </Button>
-          </Link>
-          <Button variant="superior" size="sm" className="h-9 px-5 text-xs" onClick={() => scrollTo("#pricing")}>
-            Get Started
-          </Button>
+          </div>
         </div>
 
+        {/* Mobile Toggle */}
         <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? "Close menu" : "Open menu"}>
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -80,19 +80,32 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden bg-background/95 backdrop-blur-xl border-b border-white/[0.04]"
           >
-            <div className="px-6 py-4 space-y-3">
-              {navLinks.map((link) => (
+            <div className="px-6 py-6 space-y-4">
+              {navTabs.map((link) => (
                 <button
-                  key={link.label}
-                  onClick={() => scrollTo(link.href)}
-                  className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  key={link.title}
+                  onClick={link.onClick}
+                  className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-left"
                 >
-                  {link.label}
+                  <link.icon size={18} />
+                  {link.title}
                 </button>
               ))}
-              <Button variant="superior" size="sm" className="w-full mt-2" onClick={() => scrollTo("#pricing")}>
-                Get Started
-              </Button>
+              <div className="pt-4 flex flex-col gap-2">
+                <Link to="/portal" onClick={() => setMobileOpen(false)}>
+                  <Button variant="glass" size="sm" className="w-full">
+                    Client Portal
+                  </Button>
+                </Link>
+                <Link to="/portal/admin" onClick={() => setMobileOpen(false)}>
+                  <Button variant="glass" size="sm" className="w-full border-accent/20">
+                    Admin
+                  </Button>
+                </Link>
+                <Button variant="superior" size="sm" className="w-full" onClick={() => scrollTo("#pricing")}>
+                  Get Started
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}
