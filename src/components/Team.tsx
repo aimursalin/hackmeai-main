@@ -4,68 +4,7 @@ import { X, Briefcase, Award, Activity, Terminal, ChevronRight, Star, Building2,
 import { Button } from "@/components/ui/button";
 import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 
-const teamMembers = [
-  { 
-    name: "Tanim Hossain", 
-    role: "Founder & CEO", 
-    tag: "The Visionary",
-    image: "/mursalin.png",
-    experience: [
-      { role: "Senior Visual Designer", company: "Meta", duration: "2020 - 2022" },
-      { role: "Ads Design Lead", company: "Google", duration: "2018 - 2020" },
-    ],
-    skills: ["Creative Direction", "UI/UX", "Brand Strategy", "Ad Conversion"],
-    successRate: "99.8%",
-    statLabel: "Projects Completed",
-    statValue: "142",
-    stars: 5
-  },
-  { 
-    name: "John Doe", 
-    role: "HR", 
-    tag: "Cheeser",
-    image: "/john.png",
-    experience: [
-      { role: "Talent Acquisition Lead", company: "Netflix", duration: "2019 - 2023" },
-      { role: "HR Representative", company: "Amazon", duration: "2016 - 2019" },
-    ],
-    skills: ["Talent Scouting", "Culture Building", "Team Management"],
-    successRate: "95%",
-    statLabel: "Elite Hires",
-    statValue: "500+",
-    stars: 4
-  },
-  { 
-    name: "Jane Smith", 
-    role: "Lead Designer", 
-    tag: "Pixel Master",
-    image: "/jane.png",
-    experience: [
-      { role: "Product Designer", company: "Apple", duration: "2021 - 2023" },
-      { role: "UI Designer", company: "Stripe", duration: "2019 - 2021" },
-    ],
-    skills: ["Design Systems", "Figma", "Interaction Design", "Prototyping"],
-    successRate: "98.5%",
-    statLabel: "Interfaces Shipped",
-    statValue: "87",
-    stars: 5
-  },
-  { 
-    name: "Prottoy", 
-    role: "Developer", 
-    tag: "Code Wizard",
-    image: "/prottoy.png",
-    experience: [
-      { role: "Frontend Engineer", company: "Vercel", duration: "2022 - 2024" },
-      { role: "Fullstack Developer", company: "Spotify", duration: "2020 - 2022" },
-    ],
-    skills: ["React", "TypeScript", "WebGL", "Framer Motion", "Next.js"],
-    successRate: "99.9%",
-    statLabel: "Commits Merged",
-    statValue: "10k+",
-    stars: 5
-  },
-];
+import { teamMembers } from "@/data/siteData";
 
 const Team = () => {
   const [selectedMember, setSelectedMember] = useState<typeof teamMembers[0] | null>(null);

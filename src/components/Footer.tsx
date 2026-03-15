@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 const scrollTo = (id: string) => {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth" });
+  } else {
+    window.location.href = `/#${id}`;
+  }
 };
 
 const Footer = () => {
@@ -17,7 +22,16 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="md:col-span-1">
-            <Link to="/" className="text-foreground font-semibold tracking-tight text-lg">
+            <Link 
+              to="/" 
+              className="text-foreground font-semibold tracking-tight text-lg"
+              onClick={(e) => {
+                if (window.location.pathname === "/") {
+                  e.preventDefault();
+                  scrollTo("hero");
+                }
+              }}
+            >
               Dominance<span className="text-muted-foreground font-light ml-1">Digital</span>
             </Link>
             <p className="text-sm text-muted-foreground mt-3 leading-relaxed">

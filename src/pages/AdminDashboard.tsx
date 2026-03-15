@@ -4,8 +4,13 @@ import { Menu, LayoutDashboard, Users, Activity, Settings, LogOut, Shield } from
 import { useNavigate } from "react-router-dom";
 import AdminManagement from "@/components/portal/AdminManagement";
 import AdminTaskBoard from "@/components/portal/AdminTaskBoard";
+import AdminPortfolioManagement from "@/components/portal/AdminPortfolioManagement";
+import AdminTeamManagement from "@/components/portal/AdminTeamManagement";
+import AdminTestimonialManagement from "@/components/portal/AdminTestimonialManagement";
+import AdminFAQManagement from "@/components/portal/AdminFAQManagement";
+import { FolderHeart, Users2, MessageSquareText, HelpCircle } from "lucide-react";
 
-type AdminView = "overview" | "users" | "tasks" | "settings";
+type AdminView = "overview" | "users" | "tasks" | "portfolios" | "team" | "testimonials" | "faqs" | "settings";
 
 const AdminDashboard = () => {
   const [activeView, setActiveView] = useState<AdminView>("overview");
@@ -16,6 +21,11 @@ const AdminDashboard = () => {
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "users", label: "User Control", icon: Users },
     { id: "tasks", label: "Live Work", icon: Activity },
+    { id: "divider1", label: "Site Management", isDivider: true },
+    { id: "portfolios", label: "Portfolios", icon: FolderHeart },
+    { id: "team", label: "Our Team", icon: Users2 },
+    { id: "testimonials", label: "Testimonials", icon: MessageSquareText },
+    { id: "faqs", label: "FAQs", icon: HelpCircle },
     { id: "settings", label: "System", icon: Settings },
   ];
 
@@ -59,6 +69,10 @@ const AdminDashboard = () => {
     ),
     users: <AdminManagement />,
     tasks: <AdminTaskBoard />,
+    portfolios: <AdminPortfolioManagement />,
+    team: <AdminTeamManagement />,
+    testimonials: <AdminTestimonialManagement />,
+    faqs: <AdminFAQManagement />,
     settings: (
       <div className="flex items-center justify-center h-[60vh] text-white/20 uppercase tracking-[0.5em] font-bold">
         Secure Settings
@@ -80,18 +94,24 @@ const AdminDashboard = () => {
 
           <nav className="flex-1 space-y-2">
             {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => { setActiveView(item.id as AdminView); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${
-                  activeView === item.id 
-                    ? "bg-white text-black shadow-[0_10px_20px_rgba(255,255,255,0.1)]" 
-                    : "text-white/40 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <item.icon className={`w-4 h-4 ${activeView === item.id ? "text-black" : "text-white/40"}`} />
-                {item.label}
-              </button>
+              item.isDivider ? (
+                <div key={item.id} className="pt-6 pb-2 px-4">
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/20">{item.label}</span>
+                </div>
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => { setActiveView(item.id as AdminView); setSidebarOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium text-sm ${
+                    activeView === item.id 
+                      ? "bg-white text-black shadow-[0_10px_20px_rgba(255,255,255,0.1)]" 
+                      : "text-white/40 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <item.icon className={`w-4 h-4 ${activeView === item.id ? "text-black" : "text-white/40"}`} />
+                  {item.label}
+                </button>
+              )
             ))}
           </nav>
 

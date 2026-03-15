@@ -114,7 +114,10 @@ const IndustryWins = () => {
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between bg-black/5 rounded-2xl p-3 cursor-pointer hover:bg-black/10 transition-colors group">
+                    <div 
+                      className="flex items-center justify-between bg-black/5 rounded-2xl p-3 cursor-pointer hover:bg-black/10 transition-colors group"
+                      onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center font-bold text-sm">
                           {ind.ceo.avatar}

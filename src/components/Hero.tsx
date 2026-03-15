@@ -22,7 +22,7 @@ const FloatingCard = ({ delay, yOffset, xOffset, duration, className, children }
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 pt-20">
+    <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden px-6 pt-20">
       {/* Subtle radial glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.15)_0%,_transparent_60%)] pointer-events-none" />
       
@@ -210,7 +210,7 @@ const Hero = () => {
               />
               <Button 
                  variant="superior" 
-                 className="relative h-14 px-8 text-sm md:text-base font-bold shadow-[0_0_20px_rgba(var(--accent),0.2)] hover:shadow-[0_0_40px_rgba(var(--accent),0.4)] transition-all ease-out duration-300 rounded-xl group overflow-hidden border border-white/10 bg-background/50 backdrop-blur-xl" 
+                 className="relative h-14 px-8 text-sm md:text-base font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all ease-out duration-300 rounded-xl group overflow-hidden" 
                  onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />

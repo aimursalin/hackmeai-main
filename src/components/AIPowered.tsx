@@ -23,15 +23,15 @@ const ConnectionLines = ({ isTop }: { isTop?: boolean }) => (
        <motion.div 
          animate={{ top: isTop ? ["0%", "50%"] : ["50%", "100%"], opacity: [0, 1, 0] }}
          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-         className={`absolute left-1/2 w-[2px] h-8 bg-purple-400 shadow-[0_0_10px_#a855f7] -translate-x-1/2 -translate-y-full`}
+         className={`absolute left-1/2 w-[2px] h-8 bg-purple-400 shadow-[0_0_10_#a855f7] -translate-x-1/2 -translate-y-full`}
        />
        <motion.div 
          animate={{ left: isTop ? ["50%", "100%"] : ["100%", "50%"], opacity: [0, 1, 0] }}
          transition={{ duration: 2, delay: 1, repeat: Infinity, ease: "linear" }}
-         className={`absolute top-1/2 h-[2px] w-8 bg-purple-400 shadow-[0_0_10px_#a855f7] -translate-y-1/2 -translate-x-full`}
+         className={`absolute top-1/2 h-[2px] w-8 bg-purple-400 shadow-[0_0_10_#a855f7] -translate-y-1/2 -translate-x-full`}
        />
 
-       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_10px_#a855f7] z-10" />
+       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_10_#a855f7] z-10" />
     </div>
     
     <div className="relative w-full h-full">
@@ -42,10 +42,10 @@ const ConnectionLines = ({ isTop }: { isTop?: boolean }) => (
        <motion.div 
          animate={{ top: isTop ? ["0%", "100%"] : ["100%", "0%"], opacity: [0, 1, 0] }}
          transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 0.5 }}
-         className="absolute left-1/2 w-[2px] h-12 bg-purple-400 shadow-[0_0_10px_#a855f7] -translate-x-1/2 -translate-y-full"
+         className="absolute left-1/2 w-[2px] h-12 bg-purple-400 shadow-[0_0_10_#a855f7] -translate-x-1/2 -translate-y-full"
        />
 
-       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_10px_#a855f7] z-10" />
+       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_10_#a855f7] z-10" />
     </div>
     
     <div className="relative w-full h-full">
@@ -55,15 +55,15 @@ const ConnectionLines = ({ isTop }: { isTop?: boolean }) => (
        <motion.div 
          animate={{ top: isTop ? ["0%", "50%"] : ["50%", "100%"], opacity: [0, 1, 0] }}
          transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: 1.5 }}
-         className={`absolute left-1/2 w-[2px] h-8 bg-purple-400 shadow-[0_0_10px_#a855f7] -translate-x-1/2 -translate-y-full`}
+         className={`absolute left-1/2 w-[2px] h-8 bg-purple-400 shadow-[0_0_10_#a855f7] -translate-x-1/2 -translate-y-full`}
        />
        <motion.div 
          animate={{ left: isTop ? ["50%", "0%"] : ["0%", "50%"], opacity: [0, 1, 0] }}
          transition={{ duration: 2, delay: 0.5, repeat: Infinity, ease: "linear" }}
-         className={`absolute top-1/2 h-[2px] w-8 bg-purple-400 shadow-[0_0_10px_#a855f7] -translate-y-1/2 -translate-x-full`}
+         className={`absolute top-1/2 h-[2px] w-8 bg-purple-400 shadow-[0_0_10_#a855f7] -translate-y-1/2 -translate-x-full`}
        />
 
-       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_10px_#a855f7] z-10" />
+       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_10_#a855f7] z-10" />
     </div>
   </div>
 );
@@ -110,7 +110,10 @@ const AIPowered = () => {
                    <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center border border-white/5"><LayoutTemplate className="w-5 h-5 text-purple-300" /></div>
                 </div>
                 <div className="bg-black/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-purple-200/40 font-mono">Smarter UX Writing..</div>
-                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl px-4 py-3.5 text-center text-sm text-white font-semibold flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:brightness-110 cursor-pointer transition-all">
+                <div 
+                   className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl px-4 py-3.5 text-center text-sm text-white font-semibold flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:brightness-110 cursor-pointer transition-all"
+                   onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                >
                   <Sparkles className="w-4 h-4" /> Generate
                 </div>
               </div>
@@ -273,8 +276,8 @@ const AIPowered = () => {
                     <img src="https://images.unsplash.com/photo-1614729939124-03290b05f4cc?w=150&q=80" alt="Astronaut kid" className="object-cover w-full h-full rounded-[1.75rem] opacity-90" />
                 </div>
                 <div className="w-full px-5 pb-5">
-                  <div className="bg-black/50 border border-white/5 rounded-xl px-4 py-3.5 text-xs text-purple-200/50 mb-3 truncate font-mono">Create a kid wearing space helmet!</div>
-                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl px-4 py-3.5 text-center text-sm text-white font-semibold flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:brightness-110 cursor-pointer transition-all">
+                   <div className="bg-black/50 border border-white/5 rounded-xl px-4 py-3.5 text-xs text-purple-200/50 mb-3 truncate font-mono">Create a kid wearing space helmet!</div>
+                   <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl px-4 py-3.5 text-center text-sm text-white font-semibold flex justify-center items-center gap-2 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:brightness-110 cursor-pointer transition-all">
                     <Sparkles className="w-4 h-4" /> Generate
                   </div>
                 </div>

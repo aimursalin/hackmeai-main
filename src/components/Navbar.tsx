@@ -17,13 +17,28 @@ const Navbar = () => {
   const scrollTo = (href: string) => {
     setMobileOpen(false);
     const el = document.querySelector(href);
-    el?.scrollIntoView({ behavior: "smooth" });
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = `/${href}`;
+    }
+  };
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (window.location.pathname === "/") {
+      e.preventDefault();
+      document.getElementById("hero")?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/60 border-b border-white/[0.04]">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="text-foreground font-semibold tracking-tight text-lg">
+        <Link 
+          to="/" 
+          className="text-foreground font-semibold tracking-tight text-lg"
+          onClick={handleLogoClick}
+        >
           Dominance<span className="text-muted-foreground font-light ml-1">Digital</span>
         </Link>
 
@@ -40,6 +55,11 @@ const Navbar = () => {
           <Link to="/portal">
             <Button variant="glass" size="sm" className="h-9 px-5 text-xs">
               Client Portal
+            </Button>
+          </Link>
+          <Link to="/portal/admin">
+            <Button variant="glass" size="sm" className="h-9 px-5 text-xs border-accent/20 hover:bg-accent/5">
+              Admin
             </Button>
           </Link>
           <Button variant="superior" size="sm" className="h-9 px-5 text-xs" onClick={() => scrollTo("#pricing")}>
