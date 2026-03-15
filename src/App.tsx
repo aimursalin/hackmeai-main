@@ -7,6 +7,10 @@ import Index from "./pages/Index.tsx";
 import ServiceGallery from "./pages/ServiceGallery.tsx";
 import PortalLogin from "./pages/PortalLogin.tsx";
 import PortalDashboard from "./pages/PortalDashboard.tsx";
+import AdminLogin from "./pages/AdminLogin.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
+import LeaderLogin from "./pages/LeaderLogin.tsx";
+import LeaderDashboard from "./pages/LeaderDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -20,8 +24,19 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/services/:slug" element={<ServiceGallery />} />
+          
+          {/* Client Portal */}
           <Route path="/portal" element={<PortalLogin />} />
           <Route path="/portal/dashboard" element={<PortalDashboard />} />
+          
+          {/* Admin Portal */}
+          <Route path="/portal/admin" element={<AdminLogin />} />
+          <Route path="/portal/admin/dashboard" element={<AdminDashboard />} />
+          
+          {/* Leader Portal */}
+          <Route path="/portal/leader" element={<LeaderLogin />} />
+          <Route path="/portal/leader/dashboard" element={<LeaderDashboard />} />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
