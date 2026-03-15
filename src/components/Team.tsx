@@ -6,9 +6,10 @@ import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 
 const teamMembers = [
   { 
-    name: "Mursalin Hossain", 
+    name: "Tanim Hossain", 
     role: "Founder & CEO", 
     tag: "The Visionary",
+    image: "/mursalin.png",
     experience: [
       { role: "Senior Visual Designer", company: "Meta", duration: "2020 - 2022" },
       { role: "Ads Design Lead", company: "Google", duration: "2018 - 2020" },
@@ -23,6 +24,7 @@ const teamMembers = [
     name: "John Doe", 
     role: "HR", 
     tag: "Cheeser",
+    image: "/john.png",
     experience: [
       { role: "Talent Acquisition Lead", company: "Netflix", duration: "2019 - 2023" },
       { role: "HR Representative", company: "Amazon", duration: "2016 - 2019" },
@@ -37,6 +39,7 @@ const teamMembers = [
     name: "Jane Smith", 
     role: "Lead Designer", 
     tag: "Pixel Master",
+    image: "/jane.png",
     experience: [
       { role: "Product Designer", company: "Apple", duration: "2021 - 2023" },
       { role: "UI Designer", company: "Stripe", duration: "2019 - 2021" },
@@ -51,6 +54,7 @@ const teamMembers = [
     name: "Prottoy", 
     role: "Developer", 
     tag: "Code Wizard",
+    image: "/prottoy.png",
     experience: [
       { role: "Frontend Engineer", company: "Vercel", duration: "2022 - 2024" },
       { role: "Fullstack Developer", company: "Spotify", duration: "2020 - 2022" },
@@ -99,8 +103,17 @@ const Team = () => {
               transition={{ duration: 0.5, delay: i * 0.1 }}
               className="glass-surface rounded-3xl p-6 text-center group relative overflow-hidden flex flex-col items-center"
             >
-              <div className="w-24 h-24 mx-auto rounded-full bg-white/[0.08] mb-6 flex items-center justify-center text-3xl font-light text-foreground group-hover:bg-accent/[0.08] group-hover:text-accent transition-colors shadow-inner border border-white/5">
-                {member.name.charAt(0)}
+              <div className="w-24 h-24 mx-auto rounded-full bg-white/[0.08] mb-6 flex items-center justify-center text-3xl font-light text-foreground group-hover:bg-accent/[0.08] group-hover:text-accent transition-all duration-500 shadow-inner border border-white/5 overflow-hidden relative">
+                {member.image ? (
+                  <img 
+                    src={member.image} 
+                    alt={member.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : (
+                  member.name.charAt(0)
+                )}
+                <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-1">{member.name}</h3>
               <p className="text-sm text-muted-foreground mb-4">{member.role}</p>
@@ -156,8 +169,16 @@ const Team = () => {
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center text-accent font-bold text-xl shadow-[0_0_15px_rgba(0,119,255,0.3)]">
-                    {selectedMember.name.charAt(0)}
+                  <div className="w-12 h-12 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center text-accent font-bold text-xl shadow-[0_0_15px_rgba(0,119,255,0.3)] overflow-hidden">
+                    {selectedMember.image ? (
+                      <img 
+                        src={selectedMember.image} 
+                        alt={selectedMember.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      selectedMember.name.charAt(0)
+                    )}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white tracking-wide">{selectedMember.name}</h3>
