@@ -63,20 +63,11 @@ const SuccessStories = () => {
         </motion.div>
       </div>
 
-      {/* Row 1: Left moving */}
-      <div className="relative w-full overflow-hidden flex cursor-grab active:cursor-grabbing mb-8">
-        <div className="flex animate-marquee hover:[animation-play-state:paused] gap-6 px-6 pt-4">
+      {/* Client Stories Row */}
+      <div className="relative w-full overflow-hidden flex cursor-grab active:cursor-grabbing pb-24">
+        <div className="flex animate-marquee-reverse hover:[animation-play-state:paused] gap-6 px-6">
            {[...stories, ...stories].map((story, i) => (
-              <ReviewCard key={`${story.id}-1-${i}`} story={story} />
-           ))}
-        </div>
-      </div>
-
-      {/* Row 2: Right moving (Reverse) */}
-      <div className="relative w-full overflow-hidden flex cursor-grab active:cursor-grabbing">
-        <div className="flex animate-marquee-reverse hover:[animation-play-state:paused] gap-6 px-6 pb-12">
-           {[...stories, ...stories].reverse().map((story, i) => (
-              <ReviewCard key={`${story.id}-2-${i}`} story={story} />
+              <ReviewCard key={`${story.id}-${i}`} story={story} />
            ))}
         </div>
       </div>

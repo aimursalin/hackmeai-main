@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Star, Play, MessageSquare, Layout, BarChart3, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
+import { GlowingEffect } from "@/components/ui/glowing-effect";
 
 const FloatingCard = ({ delay, yOffset, xOffset, duration, className, children }: any) => (
   <motion.div
@@ -198,15 +199,25 @@ const Hero = () => {
           </div>
 
           <div className="flex justify-center w-full relative z-20">
-            <Button 
-               variant="superior" 
-               size="lg" 
-               className="h-16 px-10 text-base md:text-lg font-medium shadow-[0_0_40px_rgba(var(--accent),0.25)] hover:shadow-[0_0_60px_rgba(var(--accent),0.4)] transition-all ease-out duration-300 rounded-2xl group" 
-               onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              <MessageSquare className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-              Get Your pass Now
-            </Button>
+            <div className="relative group">
+              <GlowingEffect
+                spread={40}
+                glow
+                disabled={false}
+                proximity={64}
+                inactiveZone={0.01}
+                className="rounded-2xl"
+              />
+              <Button 
+                 variant="superior" 
+                 className="relative h-14 px-8 text-sm md:text-base font-bold shadow-[0_0_20px_rgba(var(--accent),0.2)] hover:shadow-[0_0_40px_rgba(var(--accent),0.4)] transition-all ease-out duration-300 rounded-xl group overflow-hidden border border-white/10 bg-background/50 backdrop-blur-xl" 
+                 onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
+                <MessageSquare className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                Get Your Pass Now
+              </Button>
+            </div>
           </div>
         </motion.div>
       </div>
