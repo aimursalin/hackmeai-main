@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Play, Pause, AlertCircle, CheckCircle, Clock, MoreVertical } from "lucide-react";
+import { Play, Pause, AlertCircle, CheckCircle, Clock, MoreVertical, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Project {
   id: string;
@@ -11,14 +13,6 @@ interface Project {
   dueDate: string;
 }
 
-const initialProjects: Project[] = [
-  { id: "1", name: "Brand Identity Redesign", designer: "Aria Voss", progress: 78, status: "active", dueDate: "Mar 22" },
-  { id: "2", name: "Dashboard UI Kit", designer: "Mira Chen", progress: 100, status: "completed", dueDate: "Mar 18" },
-  { id: "3", name: "Landing Page v2", designer: "Soren Blake", progress: 45, status: "active", dueDate: "Mar 25" },
-  { id: "4", name: "Meta Ad Creatives (Batch 3)", designer: "Jade Kim", progress: 12, status: "active", dueDate: "Mar 28" },
-  { id: "5", name: "Social Media Kit", designer: "Aria Voss", progress: 0, status: "on-hold", dueDate: "Apr 2" },
-];
-
 const statusConfig: Record<string, { color: string; bg: string; icon: React.ElementType; label: string }> = {
   active: { color: "text-green-400", bg: "bg-green-400/10", icon: Play, label: "Active" },
   paused: { color: "text-amber-400", bg: "bg-amber-400/10", icon: Pause, label: "Paused" },
@@ -27,7 +21,8 @@ const statusConfig: Record<string, { color: string; bg: string; icon: React.Elem
 };
 
 const PortalProjects = () => {
-  const [projects, setProjects] = useState(initialProjects);
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<Project[]>([]);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
   const updateStatus = (id: string, status: Project["status"]) => {

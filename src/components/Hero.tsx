@@ -143,7 +143,7 @@ const Hero = () => {
           </div>
 
           <p className="text-base md:text-lg font-medium text-foreground/80 tracking-wide mb-6">
-             Leading UI/UX & Ads Design Agency
+             Leading UI/UX & Social Media Ads Design Agency
           </p>
 
           <h1 className="text-5xl md:text-6xl lg:text-[5.5rem] font-bold leading-[1.1] tracking-tight text-foreground mb-8 max-w-4xl mx-auto">
@@ -209,7 +209,7 @@ const Hero = () => {
                 className="rounded-2xl"
               />
               <Button 
-                 variant="superior" 
+                 variant="default" 
                  className="relative h-14 px-8 text-sm md:text-base font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] transition-all ease-out duration-300 rounded-xl group overflow-hidden" 
                  onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
               >

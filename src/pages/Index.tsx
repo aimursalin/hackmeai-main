@@ -13,6 +13,8 @@ import { Calendar } from "@/components/ui/calendar-bento";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 
+import HowItWorksSteps from "@/components/HowItWorks";
+
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -21,6 +23,7 @@ const Index = () => {
       <ConnectSection />
       <IndustryWins />
       <AIPowered />
+      <HowItWorksSteps />
       <Services />
       <SuccessStories />
       <Trustpilot />

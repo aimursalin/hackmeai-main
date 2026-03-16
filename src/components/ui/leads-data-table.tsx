@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
-import { ChevronDown, MoreHorizontal } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export interface Lead {
   id: string;
@@ -143,9 +144,58 @@ export function LeadsTable({
   className = ""
 }: LeadsTableProps = {}) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [hoveredAction, setHoveredAction] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('leads')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const mappedLeads: Lead[] = data.map(l => ({
+            id: l.id,
+            name: l.name,
+            email: l.email,
+            source: l.source || 'ORGANIC',
+            sourceType: l.type || 'organic',
+            status: l.status || 'new',
+            size: l.size || 0,
+            interest: [45, 52, 48, 55, 58, 60, 57, 62, 65, 63], // Default sparkline data for now
+            probability: l.size > 100000 ? 'high' : l.size > 50000 ? 'mid' : 'low',
+            lastAction: new Date(l.created_at).toLocaleDateString()
+          }));
+          setLeads(mappedLeads);
+        }
+      } catch (err) {
+        console.error('Error fetching leads:', err);
+        // Fallback to defaultLeads if Supabase fails (e.g. no connection or table)
+        setLeads(defaultLeads);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeads();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('leads-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, fetchLeads)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const shouldReduceMotion = useReducedMotion();
   const { theme } = useTheme();
@@ -387,11 +437,16 @@ export function LeadsTable({
               </div>
             </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+        {isLoading ? (
+          <div className="flex items-center justify-center p-12">
+            <Loader2 className="w-8 h-8 text-primary animate-spin opacity-50" />
+          </div>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
           {leads.map((lead, index) => (
             <motion.div key={lead.id} variants={rowVariants}>
               <div
@@ -485,7 +540,8 @@ export function LeadsTable({
                 </div>
               </motion.div>
             ))}
-        </motion.div>
+          </motion.div>
+        )}
       </div>
 
       <AnimatePresence>

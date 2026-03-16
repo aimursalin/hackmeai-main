@@ -1,5 +1,8 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Clock, CheckCircle, Palette, Layout, PenTool, Monitor } from "lucide-react";
+import { Star, Clock, CheckCircle, Palette, Layout, PenTool, Monitor, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Designer {
   name: string;
@@ -12,42 +15,6 @@ interface Designer {
   status: "available" | "busy" | "offline";
   currentTask: string;
 }
-
-const designers: Designer[] = [
-  {
-    name: "Aria Voss",
-    avatar: "AV",
-    role: "Senior Brand Designer",
-    rating: 4.9,
-    completedProjects: 47,
-    avgTurnaround: "2.1 days",
-    skills: ["Brand Identity", "Logo Design", "Typography"],
-    status: "available",
-    currentTask: "Brand Identity Redesign",
-  },
-  {
-    name: "Mira Chen",
-    avatar: "MC",
-    role: "UI/UX Designer",
-    rating: 4.8,
-    completedProjects: 62,
-    avgTurnaround: "1.8 days",
-    skills: ["Dashboard UI", "Mobile Design", "Design Systems"],
-    status: "busy",
-    currentTask: "Dashboard UI Kit",
-  },
-  {
-    name: "Soren Blake",
-    avatar: "SB",
-    role: "Web Designer",
-    rating: 4.7,
-    completedProjects: 35,
-    avgTurnaround: "2.5 days",
-    skills: ["Landing Pages", "Web Design", "Responsive"],
-    status: "available",
-    currentTask: "Landing Page v2",
-  },
-];
 
 const statusColors: Record<string, string> = {
   available: "bg-green-500",
@@ -63,6 +30,73 @@ const skillIcons: Record<string, React.ElementType> = {
 };
 
 const PortalDesigners = () => {
+  const { user } = useAuth();
+  const [designersList, setDesignersList] = useState<Designer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDesigners = async () => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+        // Get designers assigned to client's projects
+        const { data: projectDesigners, error } = await supabase
+          .from('projects')
+          .select(`
+            designers (
+              id,
+              stars,
+              profiles (
+                full_name,
+                avatar_url,
+                role
+              )
+            )
+          `)
+          .eq('client_id', user.id);
+
+        if (error) throw error;
+
+        if (projectDesigners) {
+          // Extract unique designers
+          const uniqueDesigners = Array.from(new Set(
+            projectDesigners
+              .map(p => p.designers)
+              .filter(Boolean)
+              .map(d => JSON.stringify(d))
+          )).map(s => JSON.parse(s));
+
+          const mappedDesigners: Designer[] = uniqueDesigners.map((d: any) => ({
+            name: d.profiles.full_name,
+            avatar: d.profiles.full_name.split(' ').map((n: string) => n[0]).join(''),
+            role: d.profiles.role,
+            rating: d.stars,
+            completedProjects: 45, // Placeholder
+            avgTurnaround: "2.1 days", // Placeholder
+            skills: ["UI/UX", "Brand Identity"], // Placeholder
+            status: "available",
+            currentTask: "Active Project"
+          }));
+          setDesignersList(mappedDesigners);
+        }
+      } catch (err) {
+        console.error('Error fetching designers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDesigners();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      </div>
+    );
+  }
   return (
     <div>
       <div className="mb-8">
@@ -71,7 +105,7 @@ const PortalDesigners = () => {
       </div>
 
       <div className="space-y-5">
-        {designers.map((designer, i) => (
+        {designersList.map((designer, i) => (
           <motion.div
             key={designer.name}
             initial={{ opacity: 0, y: 10 }}

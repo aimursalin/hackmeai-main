@@ -4,17 +4,33 @@ import { Shield } from "lucide-react";
 import StepCard from "@/components/ui/step-card";
 import { useToast } from "@/hooks/use-toast";
 
+import { supabase } from "@/lib/supabase";
+
 const PortalLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleComplete = (data: { email: string; password: string; otp: string }) => {
-    console.log("Portal Login Data:", data);
-    toast({
-      title: "Access Authorized",
-      description: "Welcome back, John. System nominal.",
-    });
-    navigate("/portal/dashboard");
+  const handleComplete = async (data: { email: string; password: string; otp: string }) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Access Authorized",
+        description: "Welcome back. System nominal.",
+      });
+      navigate("/portal/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Access Denied",
+        description: error.message || "Invalid credentials.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

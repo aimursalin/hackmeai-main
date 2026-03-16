@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, LayoutDashboard, Users, Activity, Settings, LogOut, Shield, User, Settings as SettingsIcon } from "lucide-react";
+import { Menu, LayoutDashboard, Users, Activity, Settings, LogOut, Shield, User, Settings as SettingsIcon, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import AdminManagement from "@/components/portal/AdminManagement";
 import AdminTaskBoard from "@/components/portal/AdminTaskBoard";
 import AdminPortfolioManagement from "@/components/portal/AdminPortfolioManagement";
@@ -22,13 +24,58 @@ import {
     PopoverFooter,
 } from "@/components/ui/popover";
 import { LeadsTable } from "@/components/ui/leads-data-table";
+import AssigneeUser, { users as userList, User as AssigneeType } from "@/components/ui/assignee-user";
+import { AlertCircle } from "lucide-react";
 
 type AdminView = "overview" | "users" | "tasks" | "portfolios" | "team" | "testimonials" | "faqs" | "settings";
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [metrics, setMetrics] = useState({ users: 0, tasks: 0 });
+  const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveView] = useState<AdminView>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      if (!user) return;
+
+      try {
+        setIsLoading(true);
+        // Fetch admin profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        setProfile(profileData);
+
+        // Fetch metrics
+        const { count: userCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+        const { count: projectCount } = await supabase
+          .from('projects')
+          .select('*', { count: 'exact', head: true });
+
+        setMetrics({
+          users: userCount || 0,
+          tasks: projectCount || 0
+        });
+
+      } catch (err) {
+        console.error('Error fetching admin data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAdminData();
+  }, [user]);
 
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -42,27 +89,35 @@ const AdminDashboard = () => {
     { id: "settings", label: "System", icon: Settings },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-white animate-spin" />
+      </div>
+    );
+  }
+
   const viewComponents: Record<AdminView, React.ReactNode> = {
     overview: (
       <div className="space-y-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-4xl font-extrabold text-white tracking-tight mb-2">Central Command</h1>
-            <p className="text-white/40 font-medium tracking-wide">Welcome back, Administrator. System status: <span className="text-emerald-500">Nominal</span></p>
+            <p className="text-white/40 font-medium tracking-wide">Welcome back, {profile?.full_name?.split(' ')[0] || 'Administrator'}. System status: <span className="text-emerald-500">Nominal</span></p>
           </div>
           <div className="flex gap-4">
             <div className="glass-surface p-4 px-6 rounded-2xl border border-white/5">
               <p className="text-[10px] uppercase tracking-widest font-bold text-white/30 mb-1">Total Users</p>
-              <p className="text-2xl font-bold text-white">42</p>
+              <p className="text-2xl font-bold text-white">{metrics.users}</p>
             </div>
             <div className="glass-surface p-4 px-6 rounded-2xl border border-white/5">
               <p className="text-[10px] uppercase tracking-widest font-bold text-white/30 mb-1">Active Tasks</p>
-              <p className="text-2xl font-bold text-white">128</p>
+              <p className="text-2xl font-bold text-white">{metrics.tasks}</p>
             </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="glass-surface p-8 rounded-[2.5rem] border border-white/10 hover:border-white/20 transition-all cursor-pointer" onClick={() => setActiveView("users")}>
                 <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6">
                     <Users className="w-6 h-6 text-white" />
@@ -76,6 +131,24 @@ const AdminDashboard = () => {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Live Workforce</h3>
                 <p className="text-white/40 text-sm">Monitor who is doing what in real-time across all sections.</p>
+            </div>
+            <div className="glass-surface p-8 rounded-[2.5rem] border border-white/10 hover:border-white/20 transition-all relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <AlertCircle className="w-5 h-5 text-rose-500 animate-pulse" />
+                </div>
+                <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center mb-6">
+                    <Shield className="w-6 h-6 text-rose-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 italic tracking-tighter uppercase">Urgent Assigned</h3>
+                <p className="text-white/40 text-sm mb-6">Emergency task routing for high-priority items.</p>
+                <div className="flex items-center gap-4">
+                    <p className="text-[10px] font-black text-rose-500/50 uppercase tracking-[0.2em]">Route to:</p>
+                    <AssigneeUser 
+                        value={null} 
+                        onChange={() => {}} 
+                        userList={userList.filter(u => u.role === 'Admin')} 
+                    />
+                </div>
             </div>
         </div>
 
@@ -168,8 +241,8 @@ const AdminDashboard = () => {
                                 <AvatarFallback>AD</AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
-                                <PopoverTitle className="text-sm font-bold text-white truncate italic uppercase tracking-tight">John Administrator</PopoverTitle>
-                                <PopoverDescription className="text-[10px] text-white/30 font-medium truncate tracking-widest uppercase">system.root@dominance.cmd</PopoverDescription>
+                                <PopoverTitle className="text-sm font-bold text-white truncate italic uppercase tracking-tight">{profile?.full_name || 'Administrator'}</PopoverTitle>
+                                <PopoverDescription className="text-[10px] text-white/30 font-medium truncate tracking-widest uppercase">{profile?.email || user?.email || 'system.root@dominance.cmd'}</PopoverDescription>
                             </div>
                         </div>
                     </PopoverHeader>

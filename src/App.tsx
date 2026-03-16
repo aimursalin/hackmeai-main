@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,13 +14,17 @@ import LeaderDashboard from "./pages/LeaderDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 import { InteractiveNebulaShader } from "@/components/ui/liquid-shader";
+import { AuthProvider } from "@/contexts/AuthContext";
+
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <InteractiveNebulaShader className="opacity-40" />
+    <AuthProvider>
+      <TooltipProvider>
+        <InteractiveNebulaShader className="opacity-40" />
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -30,21 +34,43 @@ const App = () => (
           
           {/* Client Portal */}
           <Route path="/portal" element={<PortalLogin />} />
-          <Route path="/portal/dashboard" element={<PortalDashboard />} />
+          <Route 
+            path="/portal/dashboard" 
+            element={
+              <ProtectedRoute requiredRole="client">
+                <PortalDashboard />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Admin Portal */}
           <Route path="/portal/admin" element={<AdminLogin />} />
-          <Route path="/portal/admin/dashboard" element={<AdminDashboard />} />
+          <Route 
+            path="/portal/admin/dashboard" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Leader Portal */}
           <Route path="/portal/leader" element={<LeaderLogin />} />
-          <Route path="/portal/leader/dashboard" element={<LeaderDashboard />} />
+          <Route 
+            path="/portal/leader/dashboard" 
+            element={
+              <ProtectedRoute>
+                <LeaderDashboard />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

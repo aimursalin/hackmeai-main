@@ -4,17 +4,19 @@ import { motion } from "framer-motion";
 import { Shield, Eye, EyeOff, Lock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const AdminLogin = () => {
-  const [adminId, setAdminId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminId.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       toast({
         title: "Security prompt",
         description: "Credentials are required to access central command.",
@@ -22,8 +24,39 @@ const AdminLogin = () => {
       });
       return;
     }
-    toast({ title: "Welcome, Administrator", description: "System access granted." });
-    navigate("/portal/admin/dashboard");
+
+    try {
+      setIsAuthorizing(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      // Check if user is admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || profile?.role !== 'admin') {
+        await supabase.auth.signOut();
+        throw new Error("Unauthorized: Administrator privileges required.");
+      }
+
+      toast({ title: "Welcome, Administrator", description: "System access granted." });
+      navigate("/portal/admin/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Access Denied",
+        description: error.message || "Failed to authorize.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAuthorizing(false);
+    }
   };
 
   return (
@@ -56,14 +89,14 @@ const AdminLogin = () => {
           
           <form onSubmit={handleLogin} className="space-y-6 relative">
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] ml-1">Terminal ID</label>
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] ml-1">Administrator Email</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                 <input
-                  type="text"
-                  value={adminId}
-                  onChange={(e) => setAdminId(e.target.value)}
-                  placeholder="ADM-XXXX-XXXX"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@hackmeai.com"
                   className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-12 text-white placeholder:text-white/10 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/10 transition-all font-mono text-sm tracking-widest"
                 />
               </div>
@@ -89,7 +122,7 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            <Button type="submit" variant="superior" className="w-full h-14 bg-white text-black hover:bg-white/90 rounded-2xl font-bold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 group">
+            <Button type="submit" variant="default" className="w-full h-14 bg-white text-black hover:bg-white/90 rounded-2xl font-bold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 group">
               Authorize Entrance
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>

@@ -1,30 +1,82 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, FolderKanban, MessageCircle, Clock, ArrowRight } from "lucide-react";
+import { Users, FolderKanban, MessageCircle, Clock, ArrowRight, Loader2 } from "lucide-react";
 import type { PortalView } from "@/pages/PortalDashboard";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   onNavigate: (view: PortalView) => void;
 }
 
-const stats = [
-  { label: "Active Designers", value: "3", icon: Users, color: "text-accent" },
-  { label: "Active Projects", value: "4", icon: FolderKanban, color: "text-accent" },
-  { label: "Unread Messages", value: "3", icon: MessageCircle, color: "text-accent" },
-  { label: "Avg. Turnaround", value: "2.4d", icon: Clock, color: "text-accent" },
-];
-
-const recentActivity = [
-  { text: "Aria Voss delivered Brand Identity Redesign files", time: "2h ago", type: "delivery" },
-  { text: "New message from Mira Chen", time: "4h ago", type: "message" },
-  { text: "Landing Page v2 moved to review", time: "6h ago", type: "update" },
-  { text: "Jade Kim started Meta Ad Creatives", time: "1d ago", type: "start" },
-];
-
 const PortalOverview = ({ onNavigate }: Props) => {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState([
+    { label: "Active Designers", value: "0", icon: Users, color: "text-accent" },
+    { label: "Active Projects", value: "0", icon: FolderKanban, color: "text-accent" },
+    { label: "Unread Messages", value: "0", icon: MessageCircle, color: "text-accent" },
+    { label: "Avg. Turnaround", value: "2.4d", icon: Clock, color: "text-accent" },
+  ]);
+
+  const [recentActivity] = useState([
+    { text: "Aria Voss delivered Brand Identity Redesign files", time: "2h ago", type: "delivery" },
+    { text: "New message from Mira Chen", time: "4h ago", type: "message" },
+    { text: "Landing Page v2 moved to review", time: "6h ago", type: "update" },
+    { text: "Jade Kim started Meta Ad Creatives", time: "1d ago", type: "start" },
+  ]);
+
+  useEffect(() => {
+    const fetchPortalData = async () => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+        // Fetch profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        setProfile(profileData);
+
+        // Fetch projects count
+        const { count: projectCount } = await supabase
+          .from('projects')
+          .select('*', { count: 'exact', head: true })
+          .eq('client_id', user.id);
+
+        // Update stats (mocking designers and messages for now since we don't have explicit counts yet)
+        setStats(prev => [
+          { ...prev[0], value: "2" }, // Placeholder
+          { ...prev[1], value: (projectCount || 0).toString() },
+          { ...prev[2], value: "0" }, // Placeholder
+          { ...prev[3], value: "2.4d" },
+        ]);
+
+      } catch (err) {
+        console.error('Error fetching portal data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortalData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      </div>
+    );
+  }
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, John</h1>
+        <h1 className="text-3xl font-bold text-foreground">Welcome back, {profile?.full_name?.split(' ')[0] || 'Member'}</h1>
         <p className="text-muted-foreground mt-1">Here's what's happening with your projects.</p>
       </div>
 

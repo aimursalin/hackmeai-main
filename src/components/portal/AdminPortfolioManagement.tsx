@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { services, Service } from "@/data/services";
-import { Layout, Palette, Globe, Megaphone, Plus, Trash2, Edit, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { services as defaultServices, Service } from "@/data/services";
+import { Layout, Palette, Globe, Megaphone, Plus, Trash2, Edit, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
-const icons = {
+const icons: Record<string, any> = {
   "graphic-design": Palette,
   "ui-ux-design": Layout,
   "web-design": Globe,
@@ -11,7 +12,66 @@ const icons = {
 };
 
 const AdminPortfolioManagement = () => {
-  const [list, setList] = useState<Service[]>(services);
+  const [list, setList] = useState<Service[]>(defaultServices);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch categories (services)
+        const { data: categories, error: catError } = await supabase
+          .from('categories')
+          .select('*');
+
+        if (catError) throw catError;
+
+        if (categories && categories.length > 0) {
+          // Fetch portfolios for each category
+          const { data: portfolios, error: portError } = await supabase
+            .from('portfolios')
+            .select(`
+              *,
+              portfolio_items (
+                *
+              )
+            `);
+
+          if (portError) throw portError;
+
+          const mappedServices: Service[] = categories.map(cat => ({
+            id: cat.id,
+            title: cat.title,
+            slug: cat.id, // Fallback slug
+            description: '', // Fallback description
+            designers: [], 
+            portfolio: portfolios
+              ?.filter(p => p.category_id === cat.id)
+              .flatMap(p => p.portfolio_items.map((item: any) => ({
+                id: item.id,
+                title: item.title || '',
+                image: item.image_url
+              }))) || []
+          }));
+          setList(mappedServices);
+        }
+      } catch (err) {
+        console.error('Error fetching portfolio:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPortfolio();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -27,7 +87,7 @@ const AdminPortfolioManagement = () => {
 
       <div className="grid gap-6">
         {list.map((service) => {
-          const Icon = icons[service.id as keyof typeof icons] || Layout;
+          const Icon = icons[service.id] || Layout;
           return (
             <div key={service.id} className="glass-surface p-8 rounded-[2rem] border border-white/5 hover:border-white/10 transition-all group">
               <div className="flex items-start justify-between mb-6">
@@ -37,7 +97,7 @@ const AdminPortfolioManagement = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">{service.title}</h3>
-                    <p className="text-white/40 text-xs mt-1">{service.designers.length} active designers</p>
+                    <p className="text-white/40 text-xs mt-1">{service.designers?.length || 0} active designers</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
