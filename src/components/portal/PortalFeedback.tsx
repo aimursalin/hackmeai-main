@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Send, CheckCircle, AlertTriangle } from "lucide-react";
+import { Star, Send, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 type FeedbackType = "rating" | "complaint";
 
@@ -14,29 +16,98 @@ interface PastFeedback {
   status: "reviewed" | "pending";
 }
 
-const pastFeedback: PastFeedback[] = [
+const defaultPastFeedback: PastFeedback[] = [
   { type: "rating", project: "Dashboard UI Kit", message: "Exceptional work. The dark mode variants are clean.", rating: 5, date: "Mar 15", status: "reviewed" },
   { type: "complaint", project: "Meta Ad Creatives (Batch 2)", message: "Colors were inconsistent with the brand guide.", date: "Mar 10", status: "reviewed" },
 ];
 
-const projects = [
-  "Brand Identity Redesign",
-  "Dashboard UI Kit",
-  "Landing Page v2",
-  "Meta Ad Creatives (Batch 3)",
-  "Social Media Kit",
-];
-
 const PortalFeedback = () => {
+  const { user } = useAuth();
   const [type, setType] = useState<FeedbackType>("rating");
   const [selectedProject, setSelectedProject] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [pastFeedback, setPastFeedback] = useState<PastFeedback[]>(defaultPastFeedback);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        // Fetch user's projects for the dropdown
+        const { data: projectData, error: projError } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('client_id', user.id);
+
+        if (!projError && projectData && projectData.length > 0) {
+          setProjects(projectData.map(p => p.name).filter(Boolean));
+        } else {
+          // Fallback projects
+          setProjects([
+            "Brand Identity Redesign",
+            "Dashboard UI Kit",
+            "Landing Page v2",
+            "Meta Ad Creatives (Batch 3)",
+            "Social Media Kit",
+          ]);
+        }
+
+        // Fetch past feedback
+        const { data: feedbackData, error: fbError } = await supabase
+          .from('feedback')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (!fbError && feedbackData && feedbackData.length > 0) {
+          setPastFeedback(feedbackData.map((f: any) => ({
+            type: f.type || 'rating',
+            project: f.project_name || f.project || 'Unknown',
+            message: f.message || '',
+            rating: f.rating,
+            date: new Date(f.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            status: f.status || 'pending',
+          })));
+        }
+      } catch (err) {
+        console.error('Error fetching feedback data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Try to persist to Supabase
+    if (user) {
+      try {
+        await supabase.from('feedback').insert({
+          user_id: user.id,
+          type,
+          project_name: selectedProject,
+          message,
+          rating: type === 'rating' ? rating : null,
+          status: 'pending',
+        });
+      } catch (err) {
+        console.log('Could not persist feedback:', err);
+      }
+    }
+
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);
@@ -45,6 +116,14 @@ const PortalFeedback = () => {
       setSelectedProject("");
     }, 2500);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -155,7 +234,7 @@ const PortalFeedback = () => {
 
                 <Button
                   type="submit"
-                  variant="superior"
+                  variant="default"
                   className="w-full group"
                 >
                   <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

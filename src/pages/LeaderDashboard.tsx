@@ -1,19 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, LayoutDashboard, Users, MessageSquare, ListTodo, LogOut, TrendingUp } from "lucide-react";
+import { Menu, LayoutDashboard, Users, MessageSquare, ListTodo, LogOut, TrendingUp, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { mockUsers, mockTasks } from "@/data/portalData";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 type LeaderView = "overview" | "team" | "projects" | "chat";
 
+interface TeamMember {
+  id: string;
+  full_name: string;
+  avatar_url: string;
+  role: string;
+  status: string;
+}
+
+interface Task {
+  id: string;
+  name: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  assignee_name?: string;
+}
+
 const LeaderDashboard = () => {
+  const { user } = useAuth();
   const [activeView, setActiveView] = useState<LeaderView>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [myTeam, setMyTeam] = useState<TeamMember[]>([]);
+  const [myTasks, setMyTasks] = useState<Task[]>([]);
   const navigate = useNavigate();
 
-  const myTeam = mockUsers.filter(u => u.role === 'employee');
-  const myTasks = mockTasks;
+  useEffect(() => {
+    const fetchLeaderData = async () => {
+      if (!user) return;
+
+      try {
+        setIsLoading(true);
+
+        // Fetch leader profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        setProfile(profileData);
+
+        // Fetch team members (employees/designers)
+        const { data: teamData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, role, status')
+          .in('role', ['employee', 'designer']);
+
+        if (teamData) {
+          setMyTeam(teamData.map(m => ({
+            id: m.id,
+            full_name: m.full_name || 'Unknown',
+            avatar_url: m.avatar_url || '',
+            role: m.role || 'employee',
+            status: m.status || 'active',
+          })));
+        }
+
+        // Fetch projects/tasks
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('id, name, status, priority, assigned_to');
+
+        if (projectData) {
+          // Map assigned_to IDs to names from teamData
+          const teamMap = new Map((teamData || []).map(t => [t.id, t.full_name]));
+          setMyTasks(projectData.map(p => ({
+            id: p.id,
+            name: p.name || 'Untitled Project',
+            status: p.status || 'todo',
+            priority: p.priority || 'medium',
+            assigned_to: p.assigned_to || '',
+            assignee_name: teamMap.get(p.assigned_to) || 'Unassigned',
+          })));
+        }
+
+      } catch (err) {
+        console.error('Error fetching leader data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeaderData();
+  }, [user]);
 
   const menuItems = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -22,13 +102,26 @@ const LeaderDashboard = () => {
     { id: "chat", label: "Team Chat", icon: MessageSquare },
   ];
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/portal/leader");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#080a0f] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+      </div>
+    );
+  }
+
   const viewComponents: Record<LeaderView, React.ReactNode> = {
     overview: (
       <div className="space-y-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">Section Dashboard</h1>
-            <p className="text-blue-400/60 font-medium">Managing Section A • Performance: Excellent</p>
+            <p className="text-blue-400/60 font-medium">Welcome back, {profile?.full_name?.split(' ')[0] || 'Leader'} • Performance: Excellent</p>
           </div>
           <div className="flex items-center gap-2 bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20">
             <TrendingUp className="w-4 h-4 text-blue-400" />
@@ -39,15 +132,15 @@ const LeaderDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="glass-surface p-6 rounded-3xl border border-white/5">
                 <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Pending Review</p>
-                <p className="text-3xl font-bold text-white">08</p>
+                <p className="text-3xl font-bold text-white">{myTasks.filter(t => t.status === 'review').length.toString().padStart(2, '0')}</p>
             </div>
             <div className="glass-surface p-6 rounded-3xl border border-white/5">
                 <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Team Members</p>
                 <p className="text-3xl font-bold text-white">{myTeam.length}</p>
             </div>
             <div className="glass-surface p-6 rounded-3xl border border-white/5">
-                <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Avg. Turnaround</p>
-                <p className="text-3xl font-bold text-white text-emerald-400">18h</p>
+                <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Active Tasks</p>
+                <p className="text-3xl font-bold text-white text-emerald-400">{myTasks.filter(t => t.status === 'in-progress' || t.status === 'active').length}</p>
             </div>
         </div>
 
@@ -61,13 +154,19 @@ const LeaderDashboard = () => {
                                 {i+1}
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-white">{task.title}</p>
-                                <p className="text-xs text-white/30">{task.assignedTo} updated status to {task.status}</p>
+                                <p className="text-sm font-bold text-white">{task.name}</p>
+                                <p className="text-xs text-white/30">{task.assignee_name} • Status: {task.status}</p>
                             </div>
                         </div>
-                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">2m ago</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                          task.priority === 'high' ? 'text-rose-400' : 
+                          task.priority === 'medium' ? 'text-blue-400' : 'text-white/30'
+                        }`}>{task.priority}</span>
                     </div>
                 ))}
+                {myTasks.length === 0 && (
+                  <p className="text-white/20 text-sm text-center py-4">No tasks found</p>
+                )}
             </div>
         </div>
       </div>
@@ -79,15 +178,24 @@ const LeaderDashboard = () => {
                 {myTeam.map(member => (
                     <div key={member.id} className="glass-surface p-6 rounded-2xl flex items-center justify-between border border-white/5">
                         <div className="flex items-center gap-4">
-                            <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full border border-white/5" />
+                            <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-white/5 flex items-center justify-center overflow-hidden">
+                              {member.avatar_url ? (
+                                <img src={member.avatar_url} alt={member.full_name} className="w-10 h-10 rounded-full object-cover" />
+                              ) : (
+                                <span className="text-xs font-bold text-blue-400">{member.full_name.split(' ').map(n => n[0]).join('')}</span>
+                              )}
+                            </div>
                             <div>
-                                <p className="text-sm font-bold text-white">{member.name}</p>
+                                <p className="text-sm font-bold text-white">{member.full_name}</p>
                                 <p className="text-xs text-white/30 uppercase tracking-widest font-bold">{member.status}</p>
                             </div>
                         </div>
                         <Button size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10">View Log</Button>
                     </div>
                 ))}
+                {myTeam.length === 0 && (
+                  <p className="text-white/20 text-sm text-center py-8">No team members found</p>
+                )}
             </div>
         </div>
     ),
@@ -97,14 +205,17 @@ const LeaderDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {myTasks.map(task => (
                     <div key={task.id} className="glass-surface p-6 rounded-2xl border border-white/5">
-                        <h4 className="font-bold text-white mb-2">{task.title}</h4>
+                        <h4 className="font-bold text-white mb-2">{task.name}</h4>
                         <div className="flex items-center gap-2 mb-4">
                             <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase">{task.status}</span>
                             <span className="text-[10px] text-white/20 uppercase font-bold">{task.priority} Priority</span>
                         </div>
-                        <p className="text-xs text-white/40">Responsible: <span className="text-white/60">{task.assignedTo}</span></p>
+                        <p className="text-xs text-white/40">Responsible: <span className="text-white/60">{task.assignee_name}</span></p>
                     </div>
                 ))}
+                {myTasks.length === 0 && (
+                  <p className="text-white/20 text-sm text-center py-8 col-span-2">No projects found</p>
+                )}
             </div>
          </div>
     ),
@@ -146,7 +257,7 @@ const LeaderDashboard = () => {
             ))}
           </nav>
 
-          <button onClick={() => navigate("/")} className="mt-auto flex items-center gap-3 px-4 py-3 rounded-xl text-white/20 hover:text-white transition-all font-semibold text-sm">
+          <button onClick={handleSignOut} className="mt-auto flex items-center gap-3 px-4 py-3 rounded-xl text-white/20 hover:text-white transition-all font-semibold text-sm">
             <LogOut className="w-4 h-4" />
             Logout
           </button>

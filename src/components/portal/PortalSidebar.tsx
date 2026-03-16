@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Users, FolderKanban, MessageCircle, MessageSquareWarning, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PortalView } from "@/pages/PortalDashboard";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   activeView: PortalView;
@@ -17,6 +20,33 @@ const navItems: { id: PortalView; label: string; icon: React.ElementType }[] = [
 
 const PortalSidebar = ({ activeView, onNavigate }: Props) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url, role')
+          .eq('id', user.id)
+          .single();
+        setProfile(data);
+      } catch (err) {
+        console.error('Error fetching sidebar profile:', err);
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/portal");
+  };
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Member';
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <aside className="w-64 min-h-screen border-r border-border flex flex-col bg-card">
@@ -31,11 +61,15 @@ const PortalSidebar = ({ activeView, onNavigate }: Props) => {
       {/* Client info */}
       <div className="p-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-xs font-semibold text-accent">
-            JD
+          <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-xs font-semibold text-accent overflow-hidden">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt={displayName} className="w-9 h-9 rounded-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">John Doe</p>
+            <p className="text-sm font-medium text-foreground">{displayName}</p>
             <p className="text-[11px] text-muted-foreground">Dominance Pro</p>
           </div>
         </div>
@@ -70,7 +104,7 @@ const PortalSidebar = ({ activeView, onNavigate }: Props) => {
       {/* Logout */}
       <div className="p-3 border-t border-border">
         <button
-          onClick={() => navigate("/portal")}
+          onClick={handleSignOut}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all duration-200"
         >
           <LogOut className="w-4 h-4" strokeWidth={1.5} />

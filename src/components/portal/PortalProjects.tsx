@@ -23,14 +23,67 @@ const statusConfig: Record<string, { color: string; bg: string; icon: React.Elem
 const PortalProjects = () => {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
-  const updateStatus = (id: string, status: Project["status"]) => {
-    setProjects((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p))
-    );
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) return;
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('client_id', user.id);
+
+        if (error) throw error;
+
+        if (data) {
+          setProjects(data.map((p: any) => ({
+            id: p.id,
+            name: p.name || 'Untitled Project',
+            designer: p.designer_name || 'Unassigned',
+            progress: p.progress || 0,
+            status: p.status || 'active',
+            dueDate: p.due_date ? new Date(p.due_date).toLocaleDateString() : 'TBD',
+          })));
+        }
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
+
+  const updateStatus = async (id: string, status: Project["status"]) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setProjects((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status } : p))
+      );
+    } catch (err) {
+      console.error('Error updating project status:', err);
+    }
     setMenuOpen(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -41,7 +94,7 @@ const PortalProjects = () => {
 
       <div className="space-y-3">
         {projects.map((project, i) => {
-          const config = statusConfig[project.status];
+          const config = statusConfig[project.status] || statusConfig.active;
           return (
             <motion.div
               key={project.id}
@@ -126,6 +179,11 @@ const PortalProjects = () => {
             </motion.div>
           );
         })}
+        {projects.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p className="text-sm">No projects found</p>
+          </div>
+        )}
       </div>
     </div>
   );

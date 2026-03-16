@@ -1,10 +1,54 @@
-import { useState } from "react";
-import { testimonials, Testimonial } from "@/data/siteData";
-import { MessageSquare, Quote, Plus, Trash2, Edit } from "lucide-react";
+import { useState, useEffect } from "react";
+import { testimonials as defaultTestimonials, Testimonial } from "@/data/siteData";
+import { MessageSquare, Quote, Plus, Trash2, Edit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 const AdminTestimonialManagement = () => {
-  const [list, setList] = useState<Testimonial[]>(testimonials);
+  const [list, setList] = useState<Testimonial[]>(defaultTestimonials);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const mapped: Testimonial[] = data.map((t: any) => ({
+            id: t.id,
+            name: t.name || 'Anonymous',
+            role: t.role || 'Client',
+            thumbnail: t.thumbnail || t.avatar_url || '',
+            quote: t.quote || t.message || '',
+            color: t.color || 'from-[#a3f3e1] to-[#60d6bd]',
+          }));
+          setList(mapped);
+        }
+        // If no data in Supabase, keep the default testimonials
+      } catch (err) {
+        console.error('Error fetching testimonials:', err);
+        // Keep defaults on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'client';
+  requiredRole?: 'admin' | 'client' | 'leader';
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
@@ -52,7 +52,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    const loginPath = requiredRole === 'admin' ? '/portal/admin' : '/portal';
+    const loginPath = requiredRole === 'admin' ? '/portal/admin' : requiredRole === 'leader' ? '/portal/leader' : '/portal';
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 

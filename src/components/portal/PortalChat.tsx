@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Paperclip } from "lucide-react";
+import { Send, Paperclip, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
@@ -21,7 +23,8 @@ interface Conversation {
   messages: Message[];
 }
 
-const conversations: Conversation[] = [
+// Default fallback conversations
+const defaultConversations: Conversation[] = [
   {
     id: "1",
     designer: "Aria Voss",
@@ -30,10 +33,9 @@ const conversations: Conversation[] = [
     time: "2h ago",
     unread: 2,
     messages: [
-      { id: "m1", from: "designer", name: "Aria Voss", avatar: "AV", text: "Hey John! I've finalized the color palette and typography for the brand identity. Want to take a look?", time: "Yesterday" },
-      { id: "m2", from: "client", name: "John", avatar: "JD", text: "Yes please! Can you also include the secondary palette variants?", time: "Yesterday" },
+      { id: "m1", from: "designer", name: "Aria Voss", avatar: "AV", text: "Hey! I've finalized the color palette and typography for the brand identity. Want to take a look?", time: "Yesterday" },
+      { id: "m2", from: "client", name: "You", avatar: "ME", text: "Yes please! Can you also include the secondary palette variants?", time: "Yesterday" },
       { id: "m3", from: "designer", name: "Aria Voss", avatar: "AV", text: "Absolutely. I've uploaded the final brand kit files. The secondary variants are on page 4 of the guidelines doc.", time: "2h ago" },
-      { id: "m4", from: "designer", name: "Aria Voss", avatar: "AV", text: "Let me know if the gradient transitions work for you or if you'd like adjustments.", time: "2h ago" },
     ],
   },
   {
@@ -55,40 +57,154 @@ const conversations: Conversation[] = [
     time: "1d ago",
     unread: 0,
     messages: [
-      { id: "m6", from: "client", name: "John", avatar: "JD", text: "How's the landing page coming along?", time: "1d ago" },
+      { id: "m6", from: "client", name: "You", avatar: "ME", text: "How's the landing page coming along?", time: "1d ago" },
       { id: "m7", from: "designer", name: "Soren Blake", avatar: "SB", text: "Going great! Working on the hero section now. Should have a draft by tomorrow.", time: "1d ago" },
     ],
   },
 ];
 
 const PortalChat = () => {
-  const [activeConvo, setActiveConvo] = useState(conversations[0]);
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>(defaultConversations);
+  const [activeConvo, setActiveConvo] = useState<Conversation>(defaultConversations[0]);
   const [input, setInput] = useState("");
-  const [localMessages, setLocalMessages] = useState<Message[]>(conversations[0].messages);
+  const [localMessages, setLocalMessages] = useState<Message[]>(defaultConversations[0].messages);
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [localMessages]);
 
+  useEffect(() => {
+    const fetchChatData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        // Fetch user profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        setProfile(profileData);
+
+        // Try to fetch messages from Supabase
+        const { data: messagesData, error } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          // Table might not exist yet, use defaults
+          console.log('Messages table not available, using defaults');
+          setIsLoading(false);
+          return;
+        }
+
+        if (messagesData && messagesData.length > 0) {
+          // Group messages by conversation partner
+          const convMap = new Map<string, Message[]>();
+          const partnerNames = new Map<string, string>();
+
+          for (const msg of messagesData) {
+            const partnerId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+            if (!convMap.has(partnerId)) {
+              convMap.set(partnerId, []);
+            }
+            convMap.get(partnerId)!.push({
+              id: msg.id,
+              from: msg.sender_id === user.id ? 'client' : 'designer',
+              name: msg.sender_name || 'Unknown',
+              avatar: (msg.sender_name || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+              text: msg.content || msg.text || '',
+              time: new Date(msg.created_at).toLocaleString(),
+            });
+            if (!partnerNames.has(partnerId)) {
+              partnerNames.set(partnerId, msg.sender_id === user.id ? (msg.receiver_name || 'Designer') : (msg.sender_name || 'Designer'));
+            }
+          }
+
+          const convos: Conversation[] = Array.from(convMap.entries()).map(([id, msgs]) => ({
+            id,
+            designer: partnerNames.get(id) || 'Designer',
+            avatar: (partnerNames.get(id) || 'D').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+            lastMessage: msgs[msgs.length - 1]?.text || '',
+            time: msgs[msgs.length - 1]?.time || '',
+            unread: 0,
+            messages: msgs,
+          }));
+
+          if (convos.length > 0) {
+            setConversations(convos);
+            setActiveConvo(convos[0]);
+            setLocalMessages(convos[0].messages);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching chat data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChatData();
+  }, [user]);
+
   const handleConvoSwitch = (convo: Conversation) => {
     setActiveConvo(convo);
     setLocalMessages(convo.messages);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
+
+    const displayName = profile?.full_name || user?.email?.split('@')[0] || 'You';
+    const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
     const newMsg: Message = {
       id: `m-${Date.now()}`,
       from: "client",
-      name: "John",
-      avatar: "JD",
+      name: displayName,
+      avatar: initials,
       text: input.trim(),
       time: "Just now",
     };
     setLocalMessages((prev) => [...prev, newMsg]);
+
+    // Try to insert into Supabase
+    if (user) {
+      try {
+        await supabase.from('messages').insert({
+          sender_id: user.id,
+          receiver_id: activeConvo.id,
+          content: input.trim(),
+          sender_name: displayName,
+        });
+      } catch (err) {
+        // Silently fail if table doesn't exist
+        console.log('Could not persist message:', err);
+      }
+    }
+
     setInput("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div>

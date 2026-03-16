@@ -59,7 +59,7 @@ const App = () => (
           <Route 
             path="/portal/leader/dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="leader">
                 <LeaderDashboard />
               </ProtectedRoute>
             } 

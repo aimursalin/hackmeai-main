@@ -4,17 +4,20 @@ import { motion } from "framer-motion";
 import { Users, Eye, EyeOff, UserCircle, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const LeaderLogin = () => {
-  const [leaderId, setLeaderId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [section, setSection] = useState("A");
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leaderId.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       toast({
         title: "Access denied",
         description: "Please provide valid leader credentials.",
@@ -22,8 +25,39 @@ const LeaderLogin = () => {
       });
       return;
     }
-    toast({ title: "Welcome back, Leader", description: "You are now managing your section." });
-    navigate("/portal/leader/dashboard");
+
+    try {
+      setIsAuthorizing(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      // Check if user has leader role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || (profile?.role !== 'leader' && profile?.role !== 'admin')) {
+        await supabase.auth.signOut();
+        throw new Error("Unauthorized: Section Leader privileges required.");
+      }
+
+      toast({ title: "Welcome back, Leader", description: "You are now managing your section." });
+      navigate("/portal/leader/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Access Denied",
+        description: error.message || "Failed to authorize.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAuthorizing(false);
+    }
   };
 
   return (
@@ -57,7 +91,11 @@ const LeaderLogin = () => {
               <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] ml-1">Assigned Section</label>
               <div className="relative">
                 <LayoutGrid className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400/30" />
-                <select className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-12 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer text-sm font-medium">
+                <select 
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                  className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-12 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer text-sm font-medium"
+                >
                   <option value="A" className="bg-[#080a0f]">Section Alpha (Design)</option>
                   <option value="B" className="bg-[#080a0f]">Section Beta (Motion)</option>
                   <option value="C" className="bg-[#080a0f]">Section Gamma (Ads)</option>
@@ -66,14 +104,14 @@ const LeaderLogin = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] ml-1">Workforce ID</label>
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.3em] ml-1">Leader Email</label>
               <div className="relative">
                 <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400/30" />
                 <input
-                  type="text"
-                  value={leaderId}
-                  onChange={(e) => setLeaderId(e.target.value)}
-                  placeholder="SL-8801-XX"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="leader@hackmeai.com"
                   className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-12 text-white placeholder:text-white/10 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-sm tracking-widest"
                 />
               </div>
@@ -99,8 +137,13 @@ const LeaderLogin = () => {
               </div>
             </div>
 
-            <Button type="submit" variant="superior" className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold tracking-widest uppercase text-xs transition-all active:scale-[0.98] shadow-[0_15px_30px_rgba(59,130,246,0.3)] border-none">
-              Initialize Command
+            <Button 
+              type="submit" 
+              disabled={isAuthorizing}
+              variant="superior" 
+              className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold tracking-widest uppercase text-xs transition-all active:scale-[0.98] shadow-[0_15px_30px_rgba(59,130,246,0.3)] border-none disabled:opacity-50"
+            >
+              {isAuthorizing ? "Authorizing..." : "Initialize Command"}
             </Button>
           </form>
         </div>

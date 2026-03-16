@@ -1,20 +1,83 @@
-import { useState } from "react";
-import { mockUsers, User } from "@/data/portalData";
-import { Power, Pause, Play, Shield, User as UserIcon, MoreHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Power, Pause, Play, Shield, User as UserIcon, MoreHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+
+interface UserProfile {
+  id: string;
+  full_name: string;
+  role: string;
+  status: string;
+  avatar_url: string;
+  tasks_count?: number;
+}
 
 const AdminManagement = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const toggleStatus = (userId: string, newStatus: 'active' | 'hold' | 'inactive') => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-    toast({
-      title: `User ${newStatus}`,
-      description: `Access for ${users.find(u => u.id === userId)?.name} has been updated to ${newStatus}.`,
-    });
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, role, status, avatar_url');
+
+        if (error) throw error;
+
+        if (data) {
+          setUsers(data.map(u => ({
+            id: u.id,
+            full_name: u.full_name || 'Unknown',
+            role: u.role || 'employee',
+            status: u.status || 'active',
+            avatar_url: u.avatar_url || '',
+            tasks_count: 0,
+          })));
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const toggleStatus = async (userId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+      toast({
+        title: `User ${newStatus}`,
+        description: `Access for ${users.find(u => u.id === userId)?.full_name} has been updated to ${newStatus}.`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Could not update user status.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -28,18 +91,24 @@ const AdminManagement = () => {
           <div key={user.id} className="glass-surface p-6 rounded-[1.5rem] flex items-center justify-between border border-white/5 hover:border-white/10 transition-colors">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <img src={user.avatar} alt={user.name} className="w-12 h-12 rounded-full object-cover border border-white/10" />
+                <div className="w-12 h-12 rounded-full bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden">
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.full_name} className="w-12 h-12 rounded-full object-cover" />
+                  ) : (
+                    <UserIcon className="w-6 h-6 text-white/40" />
+                  )}
+                </div>
                 <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-black ${
                   user.status === 'active' ? 'bg-emerald-500' : user.status === 'hold' ? 'bg-amber-500' : 'bg-rose-500'
                 }`} />
               </div>
               <div>
                 <h3 className="text-white font-semibold flex items-center gap-2">
-                  {user.name} 
+                  {user.full_name} 
                   {user.role === 'leader' && <Shield className="w-3 h-3 text-blue-400" />}
                 </h3>
                 <p className="text-white/30 text-xs uppercase tracking-widest font-bold mt-0.5">
-                  {user.role} • {user.tasksCount} active tasks
+                  {user.role} • {user.status}
                 </p>
               </div>
             </div>
@@ -79,6 +148,9 @@ const AdminManagement = () => {
             </div>
           </div>
         ))}
+        {users.length === 0 && (
+          <p className="text-white/20 text-sm text-center py-8">No users found</p>
+        )}
       </div>
     </div>
   );
