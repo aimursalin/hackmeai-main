@@ -1,187 +1,131 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Check, Zap, Crown, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Tab } from "@/components/ui/pricing-tab";
-
-const FREQUENCIES = ["monthly", "yearly"];
 
 const plans = [
   {
-    name: "Dominance Pass",
-    tagline: "The Token Entry",
-    price: { monthly: 460, yearly: 460 },
-    period: "one-time",
-    icon: Zap,
+    name: "Starter",
+    price: 499,
+    period: "mo",
     features: [
-      "10 design credits",
-      "All design services",
-      "48h turnaround",
-      "2 revision rounds",
+      "48 hour turnaround",
+      "1 active task",
+      "Unlimited revisions",
+      "Slack + dashboard communication",
       "Source files included",
     ],
-    cta: "Buy Tokens",
+    cta: "Start 3-Day Trial",
     highlighted: false,
   },
   {
-    name: "Dominance Pass Pro",
-    tagline: "The Standard",
-    price: { monthly: 799, yearly: 519 },
+    name: "Pro",
+    price: 899,
     period: "mo",
-    icon: Crown,
     features: [
-      "Unlimited design requests",
-      "All design services",
-      "24h turnaround",
-      "Unlimited revisions",
-      "Source files included",
+      "24 hour turnaround",
+      "2 active tasks",
       "Priority queue",
-      "Cancel anytime",
+      "Choose specific designers",
+      "Unlimited revisions",
+      "Slack + dashboard communication",
+      "Source files included",
     ],
-    cta: "Secure Your Pass",
+    cta: "Start 3-Day Trial",
     highlighted: true,
   },
   {
-    name: "Dominance Superior",
-    tagline: "The Lifetime",
-    price: { monthly: 2999, yearly: 2999 },
-    originalPrice: 3999,
-    period: "one-time",
-    icon: Sparkles,
+    name: "Scale",
+    price: 2999,
+    period: "mo",
     features: [
-      "Everything in Pro",
-      "Lifetime access",
-      "25% discount applied",
-      "Dedicated design lead",
-      "Same-day turnaround",
-      "Lifetime revision access",
-      "Any previous design revision or change after delivery",
+      "Unlimited active tasks",
+      "Dedicated design team",
+      "Developer support (React/Tailwind)",
+      "Priority delivery",
+      "Strategy calls",
+      "Unlimited revisions",
+      "Slack + dashboard communication",
     ],
-    cta: "Go Superior",
+    cta: "Contact Sales",
     highlighted: false,
-    superior: true,
   },
 ];
 
 const Pricing = () => {
-  const [frequency, setFrequency] = useState(FREQUENCIES[0]);
-
-  const handlePurchaseClick = (planName: string) => {
-    toast.success(`Welcome to the ${planName} tier`, {
-      description: "Our concierge will contact you shortly to finalize your setup.",
-      position: "top-center",
-    });
-  };
-
   return (
     <section id="pricing" className="py-32 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
+           initial={{ opacity: 0, y: 20 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true }}
+           className="text-center mb-16"
         >
-          <p className="text-sm tracking-[0.2em] uppercase text-muted-foreground mb-4">Pricing</p>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Invest in dominance</h2>
-          <p className="text-muted-foreground max-w-lg mx-auto mb-8">Subscribe once, cancel anytime. No contracts, no friction.</p>
-
-          <div className="flex justify-center">
-            <div className="flex w-fit rounded-full bg-muted/50 p-1 border border-white/5 backdrop-blur-sm">
-              {FREQUENCIES.map((f) => (
-                <Tab
-                  key={f}
-                  text={f}
-                  selected={frequency === f}
-                  setSelected={setFrequency}
-                  discount={f === "yearly"}
-                />
-              ))}
-            </div>
-          </div>
+           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 tracking-tight">
+             Simple, <span className="italic font-light opacity-80">Predictable Pricing</span>
+           </h2>
+           <p className="text-lg text-muted-foreground max-w-xl mx-auto font-medium">
+             Replace your entire design department for the cost of one junior hire. No hidden fees. No surprises.
+           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan, i) => {
-            const currentPrice = frequency === "yearly" ? plan.price.yearly : plan.price.monthly;
-            
-            return (
+          {plans.map((plan, i) => (
               <motion.div
                 key={plan.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className={`relative rounded-3xl p-8 flex flex-col ${
-                  plan.superior
-                    ? "gradient-border"
-                    : plan.highlighted
-                    ? "glass-surface ring-1 ring-accent/20"
-                    : "glass-surface"
+                className={`relative rounded-[2rem] p-8 flex flex-col ${
+                  plan.highlighted
+                    ? "glass-surface ring-2 ring-indigo-500 shadow-[0_0_40px_rgba(99,102,241,0.15)] transform md:-translate-y-4"
+                    : "glass-surface border border-white/5"
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground text-xs font-medium px-4 py-1 rounded-full">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-lg">
                     Most Popular
                   </div>
                 )}
-                {plan.superior && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs font-medium px-4 py-1 rounded-full">
-                    25% OFF
-                  </div>
-                )}
 
-                <div className="mb-6">
-                  <plan.icon className="w-6 h-6 text-foreground/60 mb-4" strokeWidth={1.5} />
-                  <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan.tagline}</p>
+                <div className="mb-8">
+                  <h3 className="text-2xl font-bold text-foreground mb-2">{plan.name}</h3>
+                  <div className="h-10">
+                     <div className="flex items-baseline gap-1">
+                        <span className="text-5xl font-black text-foreground tabular-nums tracking-tighter">
+                           ${plan.price}
+                        </span>
+                        <span className="text-muted-foreground text-sm font-bold uppercase tracking-widest">/{plan.period}</span>
+                     </div>
+                  </div>
                 </div>
 
-                <div className="mb-8 h-[72px]">
-                  <div className="flex items-baseline gap-1">
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={`${plan.name}-${frequency}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-5xl font-bold text-foreground tabular-nums"
-                      >
-                        ${currentPrice}
-                      </motion.span>
-                    </AnimatePresence>
-                    {plan.period === "mo" && <span className="text-muted-foreground text-sm">/{plan.period}</span>}
-                  </div>
-                  {plan.originalPrice && frequency === "monthly" && (
-                    <p className="text-sm text-muted-foreground mt-1 line-through tabular-nums">${plan.originalPrice}</p>
-                  )}
-                  {plan.period === "mo" && frequency === "yearly" && (
-                     <p className="text-xs text-accent mt-1 font-medium tracking-wide uppercase">Billed Yearly</p>
-                  )}
-                </div>
+                <div className="w-full h-px bg-white/10 mb-8" />
 
-                <ul className="space-y-3 mb-8 flex-1">
+                <ul className="space-y-4 mb-10 flex-1">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-sm text-foreground/80">
-                      <Check className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" strokeWidth={2} />
+                    <li key={feature} className="flex items-start gap-3 text-sm text-foreground/80 font-medium leading-relaxed">
+                      <Check className="w-5 h-5 text-indigo-400 flex-shrink-0 drop-shadow-[0_0_5px_rgba(129,140,248,0.5)]" />
                       {feature}
                     </li>
                   ))}
                 </ul>
 
                 <Button
-                  variant={plan.highlighted ? "accent" : plan.superior ? "superior" : "glass"}
+                  variant={plan.highlighted ? "default" : "outline"}
                   size="lg"
-                  className="w-full"
-                  onClick={() => handlePurchaseClick(plan.name)}
+                  className={`w-full h-14 rounded-xl text-base font-bold shadow-xl ${
+                     plan.highlighted 
+                     ? 'bg-white text-black hover:bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                     : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+                  }`}
                 >
                   {plan.cta}
+                  {plan.highlighted && <ArrowRight className="w-4 h-4 ml-2" />}
                 </Button>
               </motion.div>
-            );
-          })}
+            ))}
         </div>
       </div>
     </section>
