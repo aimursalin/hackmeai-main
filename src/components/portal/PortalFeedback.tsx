@@ -1,293 +1,213 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Star, Send, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle, PartyPopper } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 type FeedbackType = "rating" | "complaint";
 
-interface PastFeedback {
-  type: FeedbackType;
-  project: string;
-  message: string;
-  rating?: number;
-  date: string;
-  status: "reviewed" | "pending";
-}
-
-const defaultPastFeedback: PastFeedback[] = [
-  { type: "rating", project: "Dashboard UI Kit", message: "Exceptional work. The dark mode variants are clean.", rating: 5, date: "Mar 15", status: "reviewed" },
-  { type: "complaint", project: "Meta Ad Creatives (Batch 2)", message: "Colors were inconsistent with the brand guide.", date: "Mar 10", status: "reviewed" },
+const PROJECTS = [
+  { name: "Brand Identity Redesign", emoji: "🏷️" },
+  { name: "Dashboard UI Kit",        emoji: "💻" },
+  { name: "Landing Page v2",         emoji: "🌐" },
+  { name: "Meta Ad Creatives",       emoji: "📢" },
+  { name: "Social Media Kit",        emoji: "📱" },
 ];
+
+const STEP_LABELS = ["Pick a Project", "Your Rating", "Tell Us More"];
 
 const PortalFeedback = () => {
   const { user } = useAuth();
+  const [step, setStep] = useState(0);
   const [type, setType] = useState<FeedbackType>("rating");
   const [selectedProject, setSelectedProject] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [projects, setProjects] = useState<string[]>([]);
-  const [pastFeedback, setPastFeedback] = useState<PastFeedback[]>(defaultPastFeedback);
+  const [projects, setProjects] = useState(PROJECTS);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-
-        // Fetch user's projects for the dropdown
-        const { data: projectData, error: projError } = await supabase
-          .from('projects')
-          .select('name')
-          .eq('client_id', user.id);
-
-        if (!projError && projectData && projectData.length > 0) {
-          setProjects(projectData.map(p => p.name).filter(Boolean));
-        } else {
-          // Fallback projects
-          setProjects([
-            "Brand Identity Redesign",
-            "Dashboard UI Kit",
-            "Landing Page v2",
-            "Meta Ad Creatives (Batch 3)",
-            "Social Media Kit",
-          ]);
-        }
-
-        // Fetch past feedback
-        const { data: feedbackData, error: fbError } = await supabase
-          .from('feedback')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (!fbError && feedbackData && feedbackData.length > 0) {
-          setPastFeedback(feedbackData.map((f: any) => ({
-            type: f.type || 'rating',
-            project: f.project_name || f.project || 'Unknown',
-            message: f.message || '',
-            rating: f.rating,
-            date: new Date(f.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            status: f.status || 'pending',
-          })));
-        }
-      } catch (err) {
-        console.error('Error fetching feedback data:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
+    const demo = sessionStorage.getItem('demo_auth');
+    if (demo) return;
+    if (!user) return;
+    supabase.from('projects').select('name').eq('client_id', user.id).then(({ data }) => {
+      if (data && data.length > 0) setProjects(data.map((p: any) => ({ name: p.name, emoji: "📁" })));
+    });
   }, [user]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Try to persist to Supabase
-    if (user) {
+  const handleSubmit = async () => {
+    if (user && !sessionStorage.getItem('demo_auth')) {
       try {
-        await supabase.from('feedback').insert({
-          user_id: user.id,
-          type,
-          project_name: selectedProject,
-          message,
-          rating: type === 'rating' ? rating : null,
-          status: 'pending',
-        });
-      } catch (err) {
-        console.log('Could not persist feedback:', err);
-      }
+        await supabase.from('feedback').insert({ user_id: user.id, type, project_name: selectedProject, message, rating: type === 'rating' ? rating : null, status: 'pending' });
+      } catch {}
     }
-
     setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setMessage("");
-      setRating(0);
-      setSelectedProject("");
-    }, 2500);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-20">
-        <Loader2 className="w-10 h-10 text-accent animate-spin" />
-      </div>
-    );
-  }
+  const reset = () => { setStep(0); setType("rating"); setSelectedProject(""); setRating(0); setMessage(""); setSubmitted(false); };
+  const canNext = step === 0 ? !!selectedProject : step === 1 ? (type === "rating" ? rating > 0 : true) : true;
+  const starLabel = ["", "😕 Poor", "😐 Fair", "🙂 Good", "😊 Great", "🤩 Excellent!"][hoverRating || rating];
+
+  if (submitted) return (
+    <div className="text-center py-16 px-4">
+      <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", damping: 14 }}>
+        <div className="w-24 h-24 rounded-full mx-auto mb-5 flex items-center justify-center"
+          style={{ background: "rgba(250,42,101,0.1)", boxShadow: "0 0 60px rgba(250,42,101,0.2)" }}>
+          <PartyPopper className="w-12 h-12 text-accent" />
+        </div>
+        <h2 className="text-3xl font-black text-white mb-2">Thank you! 🎉</h2>
+        <p className="text-white/40 text-base mb-8">Your feedback has been sent. We'll review it soon.</p>
+        <button onClick={reset}
+          className="px-8 py-3 rounded-2xl text-sm font-bold text-white"
+          style={{ background: "linear-gradient(135deg,#fa2a65,#d41e55)", boxShadow: "0 0 20px rgba(250,42,101,0.3)" }}>
+          Submit More Feedback
+        </button>
+      </motion.div>
+    </div>
+  );
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Feedback</h1>
-        <p className="text-muted-foreground mt-1">Rate your designer's work or report any issues.</p>
+    <div className="space-y-5 max-w-xl mx-auto">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">⭐ Give Feedback</h1>
+        <p className="text-white/35 text-sm mt-1">Help us improve by rating or flagging an issue</p>
       </div>
 
-      <div className="grid md:grid-cols-5 gap-6">
-        {/* Form */}
-        <div className="md:col-span-3">
-          <div className="glass-surface rounded-2xl p-6">
-            {/* Type toggle */}
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => setType("rating")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  type === "rating" ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Star className="w-4 h-4" strokeWidth={1.5} />
-                Rate Work
-              </button>
-              <button
-                onClick={() => setType("complaint")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  type === "complaint" ? "bg-destructive/10 text-destructive" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <AlertTriangle className="w-4 h-4" strokeWidth={1.5} />
-                Report Issue
-              </button>
-            </div>
-
-            {submitted ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12"
-              >
-                <CheckCircle className="w-12 h-12 text-accent mx-auto mb-4" />
-                <p className="text-lg font-medium text-foreground">Thank you for your feedback!</p>
-                <p className="text-sm text-muted-foreground mt-1">We'll review it shortly.</p>
-              </motion.div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Project select */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                    Select Project
-                  </label>
-                  <select
-                    value={selectedProject}
-                    onChange={(e) => setSelectedProject(e.target.value)}
-                    required
-                    className="w-full h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] px-4 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-all appearance-none"
-                  >
-                    <option value="" className="bg-card">Choose a project</option>
-                    {projects.map((p) => (
-                      <option key={p} value={p} className="bg-card">{p}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Star rating (only for rating type) */}
-                {type === "rating" && (
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 block">
-                      Rating
-                    </label>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onMouseEnter={() => setHoverRating(star)}
-                          onMouseLeave={() => setHoverRating(0)}
-                          onClick={() => setRating(star)}
-                          className="transition-transform hover:scale-110"
-                        >
-                          <Star
-                            className={`w-7 h-7 ${
-                              star <= (hoverRating || rating)
-                                ? "text-amber-400 fill-amber-400"
-                                : "text-white/10"
-                            } transition-colors`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Message */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                    {type === "rating" ? "Comments (optional)" : "Describe the issue"}
-                  </label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    required={type === "complaint"}
-                    rows={4}
-                    placeholder={type === "rating" ? "What did you like about the work?" : "Please describe the issue in detail..."}
-                    className="w-full rounded-xl bg-white/[0.04] border border-white/[0.08] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50 transition-all resize-none"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="default"
-                  className="w-full group"
-                >
-                  <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  Submit Feedback
-                </Button>
-              </form>
-            )}
-          </div>
+      {/* Progress bar */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          {STEP_LABELS.map((label, i) => (
+            <span key={label} className={`text-xs font-bold transition-colors ${i <= step ? "text-accent" : "text-white/20"}`}>
+              {i < step ? "✅" : i === step ? "👉" : "⬜"} {label}
+            </span>
+          ))}
         </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <motion.div className="h-full rounded-full" animate={{ width: `${((step + 1) / 3) * 100}%` }} transition={{ duration: 0.4 }}
+            style={{ background: "linear-gradient(90deg,#fa2a65,#ff6b9d)", boxShadow: "0 0 10px rgba(250,42,101,0.4)" }} />
+        </div>
+      </div>
 
-        {/* Past feedback */}
-        <div className="md:col-span-2">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">Previous Feedback</h2>
-          <div className="space-y-3">
-            {pastFeedback.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="glass-surface rounded-xl p-4"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {item.type === "rating" ? (
-                      <Star className="w-3.5 h-3.5 text-amber-400" />
-                    ) : (
-                      <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-                    )}
-                    <p className="text-sm font-medium text-foreground">{item.project}</p>
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                    item.status === "reviewed" ? "bg-accent/10 text-accent" : "bg-amber-400/10 text-amber-400"
-                  }`}>
-                    {item.status}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">{item.message}</p>
-                {item.rating && (
-                  <div className="flex gap-0.5 mt-2">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
-                        key={s}
-                        className={`w-3 h-3 ${s <= item.rating! ? "text-amber-400 fill-amber-400" : "text-white/10"}`}
-                      />
+      {/* Card */}
+      <div className="rounded-3xl p-6" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <AnimatePresence mode="wait">
+          {/* Step 0: Pick project */}
+          {step === 0 && (
+            <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <h2 className="text-lg font-black text-white mb-1">Which project is this about? 📁</h2>
+              <p className="text-sm text-white/35 mb-5">Choose the project you want to review</p>
+              <div className="space-y-2">
+                {projects.map(p => (
+                  <button key={p.name} onClick={() => setSelectedProject(p.name)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all"
+                    style={{
+                      background: selectedProject === p.name ? "rgba(250,42,101,0.12)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${selectedProject === p.name ? "rgba(250,42,101,0.3)" : "rgba(255,255,255,0.07)"}`,
+                    }}>
+                    <span className="text-xl">{p.emoji}</span>
+                    <span className={`text-sm font-semibold ${selectedProject === p.name ? "text-white" : "text-white/60"}`}>{p.name}</span>
+                    {selectedProject === p.name && <CheckCircle className="w-4 h-4 text-accent ml-auto" />}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 1: Type + rating */}
+          {step === 1 && (
+            <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <h2 className="text-lg font-black text-white mb-1">What would you like to do? 🤔</h2>
+              <p className="text-sm text-white/35 mb-5">Rate the work, or tell us about a problem</p>
+
+              {/* Toggle */}
+              <div className="flex gap-2 mb-6 p-1 rounded-2xl" style={{ background: "rgba(255,255,255,0.04)" }}>
+                {[
+                  { id: "rating" as FeedbackType,    emoji: "⭐", label: "Rate the Work" },
+                  { id: "complaint" as FeedbackType, emoji: "🚨", label: "Report a Problem" },
+                ].map(opt => (
+                  <button key={opt.id} onClick={() => setType(opt.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${type === opt.id ? "text-white" : "text-white/30"}`}
+                    style={type === opt.id ? { background: opt.id === "rating" ? "rgba(250,42,101,0.2)" : "rgba(239,68,68,0.2)", border: `1px solid ${opt.id === "rating" ? "rgba(250,42,101,0.3)" : "rgba(239,68,68,0.3)"}` } : {}}>
+                    {opt.emoji} {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Stars */}
+              {type === "rating" && (
+                <div className="text-center">
+                  <p className="text-sm text-white/40 mb-4">How would you rate the work?</p>
+                  <div className="flex justify-center gap-3 mb-3">
+                    {[1,2,3,4,5].map(s => (
+                      <motion.button key={s} whileTap={{ scale: 0.85 }}
+                        onMouseEnter={() => setHoverRating(s)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(s)}
+                        className="transition-transform hover:scale-110">
+                        <Star className={`w-12 h-12 transition-all duration-150 ${s <= (hoverRating || rating) ? "text-amber-400 fill-amber-400" : "text-white/10"}`} />
+                      </motion.button>
                     ))}
                   </div>
-                )}
-                <p className="text-[10px] text-muted-foreground/60 mt-2">{item.date}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+                  {starLabel && (
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-lg font-black text-amber-400">{starLabel}</motion.p>
+                  )}
+                </div>
+              )}
+
+              {type === "complaint" && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <p className="text-sm text-red-300/80">You'll describe the issue in the next step. We take all reports seriously!</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Step 2: Message */}
+          {step === 2 && (
+            <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <h2 className="text-lg font-black text-white mb-1">
+                {type === "rating" ? "Anything else to add? 💬" : "Tell us what went wrong 🔍"}
+              </h2>
+              <p className="text-sm text-white/35 mb-5">
+                {type === "rating" ? "Optional — but your thoughts help us improve!" : "Be as detailed as you can"}
+              </p>
+              <div className="px-3 py-2 rounded-xl mb-4 text-sm text-white/50 flex items-center gap-2"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span>📁</span> <span className="font-semibold">{selectedProject}</span>
+                {type === "rating" && rating > 0 && <><span>·</span><span className="flex gap-0.5">{[...Array(rating)].map((_,i)=><Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400"/>)}</span></>}
+              </div>
+              <textarea
+                value={message} onChange={e => setMessage(e.target.value)}
+                required={type === "complaint"} rows={5}
+                placeholder={type === "rating" ? "What did you love? What could be better? 😊" : "Describe what went wrong. Be specific so we can help you fast! 🙏"}
+                className="w-full rounded-2xl px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none transition-all resize-none"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                onFocus={e => e.target.style.borderColor = "rgba(250,42,101,0.4)"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.08)"}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Navigation buttons */}
+      <div className="flex gap-3">
+        {step > 0 && (
+          <button onClick={() => setStep(s => s - 1)}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold text-white/50 hover:text-white transition-colors"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <ChevronLeft className="w-4 h-4" /> Back
+          </button>
+        )}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => step < 2 ? setStep(s => s + 1) : handleSubmit()}
+          disabled={!canNext}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white transition-all disabled:opacity-30"
+          style={{ background: "linear-gradient(135deg,#fa2a65,#d41e55)", boxShadow: canNext ? "0 0 20px rgba(250,42,101,0.35)" : "none" }}
+        >
+          {step < 2 ? (<>Next Step <ChevronRight className="w-4 h-4" /></>) : (<>Submit Feedback 🚀</>)}
+        </motion.button>
       </div>
     </div>
   );

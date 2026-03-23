@@ -17,17 +17,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check for demo session first
+    const demoAuth = sessionStorage.getItem('demo_auth');
+    if (demoAuth) {
+      const demoUser = JSON.parse(demoAuth);
+      setUser(demoUser);
+      setIsLoading(false);
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (!demoAuth) {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setIsLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (!sessionStorage.getItem('demo_auth')) {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setIsLoading(false);
     });
 
@@ -37,7 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
+    sessionStorage.removeItem('demo_auth');
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
   };
 
   return (

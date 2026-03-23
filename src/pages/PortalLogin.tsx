@@ -10,7 +10,29 @@ const PortalLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const triggerDemo = () => {
+    sessionStorage.setItem('demo_auth', JSON.stringify({ id: 'demo-client-id', email: 'client@hackmeai.com', role: 'client', full_name: 'Demo Client' }));
+    window.location.href = "/portal/dashboard";
+  };
+
   const handleComplete = async (data: { email: string; password: string; otp: string }) => {
+    // Demo Mode Bypass
+    if (data.email === "client@hackmeai.com" && data.password === "password") {
+       sessionStorage.setItem('demo_auth', JSON.stringify({ 
+         id: 'demo-client-id', 
+         email: data.email, 
+         role: 'client',
+         full_name: 'Demo Client' 
+       }));
+       toast({
+         title: "Demo Access Authorized",
+         description: "Welcome back. Running in system bypass mode.",
+       });
+       // Need a small timeout to let AuthContext pick up the change if not using reactive listener
+       window.location.href = "/portal/dashboard";
+       return;
+    }
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -27,7 +49,7 @@ const PortalLogin = () => {
     } catch (error: any) {
       toast({
         title: "Access Denied",
-        description: error.message || "Invalid credentials.",
+        description: error.message || "Invalid credentials. Use demo: client@hackmeai.com / password",
         variant: "destructive",
       });
     }
@@ -36,7 +58,7 @@ const PortalLogin = () => {
   return (
     <div className="min-h-screen bg-[#050505] flex items-center justify-center px-6 overflow-hidden relative selection:bg-accent selection:text-white">
       {/* Ambient Premium Glows - Matching Hero */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(59,130,246,0.12)_0%,_transparent_60%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(250,42,101,0.10)_0%,_transparent_60%)] pointer-events-none" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-[150px] opacity-40 pointer-events-none" />
       
       <div className="w-full max-w-lg relative z-10">
@@ -78,6 +100,21 @@ const PortalLogin = () => {
         >
           Encrypted Biometric Verification Required
         </motion.p>
+
+        {/* Demo shortcut */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.0 }}
+          className="text-center mt-4"
+        >
+          <button
+            onClick={triggerDemo}
+            className="text-xs text-white/20 hover:text-accent transition-colors underline underline-offset-2"
+          >
+            Skip login — Demo access
+          </button>
+        </motion.div>
       </div>
 
       {/* Corporate Branding / Location Info - Matching Hero Vibes */}

@@ -17,11 +17,20 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   useEffect(() => {
     const checkRole = async () => {
-      if (!user || !requiredRole) {
+      // Check for demo auth override first
+      const demoAuth = sessionStorage.getItem('demo_auth');
+      if (demoAuth) {
+        const demoUser = JSON.parse(demoAuth);
+        setUserRole(demoUser.role);
         setRoleLoading(false);
         return;
       }
 
+      if (!user || !requiredRole) {
+        setRoleLoading(false);
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
           .from('profiles')

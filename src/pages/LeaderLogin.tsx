@@ -28,6 +28,21 @@ const LeaderLogin = () => {
 
     try {
       setIsAuthorizing(true);
+
+      // Demo Mode Bypass
+      if (email === "leader@hackmeai.com" && password === "password") {
+        sessionStorage.setItem('demo_auth', JSON.stringify({ 
+          id: 'demo-leader-id', 
+          email: email, 
+          role: 'leader',
+          full_name: 'Lead Designer',
+          section: section
+        }));
+        toast({ title: "Welcome back, Leader", description: "Bypass access granted." });
+        window.location.href = "/portal/leader/dashboard";
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,

@@ -27,6 +27,20 @@ const AdminLogin = () => {
 
     try {
       setIsAuthorizing(true);
+      
+      // Demo Mode Bypass
+      if (email === "admin@hackmeai.com" && password === "password") {
+        sessionStorage.setItem('demo_auth', JSON.stringify({ 
+          id: 'demo-admin-id', 
+          email: email, 
+          role: 'admin',
+          full_name: 'System Admin' 
+        }));
+        toast({ title: "Welcome back, Admin", description: "System access granted via bypass." });
+        window.location.href = "/portal/admin/dashboard";
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
