@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 const PortalLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refreshAuth } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,7 +37,8 @@ const PortalLogin = () => {
 
   const triggerDemo = () => {
     sessionStorage.setItem('demo_auth', JSON.stringify({ id: 'demo-client-id', email: 'client@hackmeai.com', role: 'client', full_name: 'Demo Client' }));
-    window.location.href = "/portal/dashboard";
+    refreshAuth();
+    navigate("/portal/dashboard");
   };
 
   const handleComplete = async (data: { email: string; password: string; otp: string }) => {
@@ -53,8 +54,8 @@ const PortalLogin = () => {
          title: "Demo Access Authorized",
          description: "Welcome back. Running in system bypass mode.",
        });
-       // Need a small timeout to let AuthContext pick up the change if not using reactive listener
-       window.location.href = "/portal/dashboard";
+       refreshAuth();
+       navigate("/portal/dashboard");
        return;
     }
 

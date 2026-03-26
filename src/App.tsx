@@ -35,6 +35,7 @@ const App = () => (
           {/* Client Portal */}
           <Route path="/portal" element={<PortalLogin />} />
           <Route path="/client" element={<Navigate to="/portal" replace />} />
+          <Route path="/client/*" element={<Navigate to="/portal" replace />} />
           <Route 
             path="/portal/dashboard" 
             element={
@@ -44,10 +45,12 @@ const App = () => (
             } 
           />
           <Route path="/dashboard" element={<Navigate to="/portal/dashboard" replace />} />
+          <Route path="/dashboard/*" element={<Navigate to="/portal/dashboard" replace />} />
           
           {/* Admin Portal */}
           <Route path="/portal/admin" element={<AdminLogin />} />
           <Route path="/admin" element={<Navigate to="/portal/admin" replace />} />
+          <Route path="/admin/*" element={<Navigate to="/portal/admin" replace />} />
           <Route 
             path="/portal/admin/dashboard" 
             element={
@@ -59,6 +62,8 @@ const App = () => (
           
           {/* Leader Portal */}
           <Route path="/portal/leader" element={<LeaderLogin />} />
+          <Route path="/leader" element={<Navigate to="/portal/leader" replace />} />
+          <Route path="/leader/*" element={<Navigate to="/portal/leader" replace />} />
           <Route 
             path="/portal/leader/dashboard" 
             element={

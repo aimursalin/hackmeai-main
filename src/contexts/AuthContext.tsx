@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  refreshAuth: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +49,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const refreshAuth = () => {
+    const demoAuth = sessionStorage.getItem('demo_auth');
+    if (demoAuth) {
+      setUser(JSON.parse(demoAuth));
+    } else {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      });
+    }
+  };
+
   const signOut = async () => {
     sessionStorage.removeItem('demo_auth');
     await supabase.auth.signOut();
@@ -56,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, signOut, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );
