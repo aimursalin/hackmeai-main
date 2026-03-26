@@ -85,6 +85,11 @@ const Navbar = () => {
               Admin
             </Button>
           </Link>
+          <Link to="/portal/leader">
+            <Button variant="glass" size="sm" className="h-9 px-4 text-xs border-white/10 hover:border-blue-500/30 hover:text-blue-400">
+              Leader
+            </Button>
+          </Link>
           <motion.div
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
@@ -133,6 +138,11 @@ const Navbar = () => {
                 <Link to="/portal/admin" onClick={() => setMobileOpen(false)}>
                   <Button variant="glass" size="sm" className="w-full border-white/10">
                     Admin
+                  </Button>
+                </Link>
+                <Link to="/portal/leader" onClick={() => setMobileOpen(false)}>
+                  <Button variant="glass" size="sm" className="w-full border-white/10">
+                    Leader
                   </Button>
                 </Link>
                 <Button variant="superior" size="sm" className="w-full" onClick={() => scrollTo("#pricing")}>
