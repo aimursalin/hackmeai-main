@@ -327,7 +327,7 @@ const Hero = () => {
         <p className="gsap-hero-item text-base md:text-lg font-normal text-white/60 tracking-wide mb-10 max-w-2xl mx-auto leading-relaxed">
           We help ambitious businesses tell their story, strengthen their
           presence, and connect with their audience through strategic media and
-          cutting-edge design.
+          cutting-edge design ajaira chodna.
         </p>
 
         {/* CTAs */}
