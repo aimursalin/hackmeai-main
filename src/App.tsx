@@ -34,6 +34,7 @@ const App = () => (
           
           {/* Client Portal */}
           <Route path="/portal" element={<PortalLogin />} />
+          <Route path="/client" element={<Navigate to="/portal" replace />} />
           <Route 
             path="/portal/dashboard" 
             element={
@@ -42,9 +43,11 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route path="/dashboard" element={<Navigate to="/portal/dashboard" replace />} />
           
           {/* Admin Portal */}
           <Route path="/portal/admin" element={<AdminLogin />} />
+          <Route path="/admin" element={<Navigate to="/portal/admin" replace />} />
           <Route 
             path="/portal/admin/dashboard" 
             element={
@@ -65,8 +68,11 @@ const App = () => (
             } 
           />
 
+          {/* 404 Route */}
+          <Route path="/404" element={<NotFound />} />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

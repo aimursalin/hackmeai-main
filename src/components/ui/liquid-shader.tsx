@@ -35,14 +35,34 @@ export function InteractiveNebulaShader({
     const container = containerRef.current;
     if (!container) return;
 
-    // Renderer, scene, camera, clock
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+    // Check for WebGL support
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) {
+        console.warn("WebGL not supported, nebula background disabled");
+        return;
+      }
+    } catch (e) {
+      return;
+    }
 
-    const scene  = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const clock  = new THREE.Clock();
+    let renderer: THREE.WebGLRenderer;
+    let scene: THREE.Scene;
+    let camera: THREE.OrthographicCamera;
+    let clock: THREE.Clock;
+    let material: THREE.ShaderMaterial;
+    let mesh: THREE.Mesh;
+
+    try {
+      // Renderer, scene, camera, clock
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+
+      scene  = new THREE.Scene();
+      camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      clock  = new THREE.Clock();
 
     // Vertex shader: pass UVs
     const vertexShader = `
@@ -124,21 +144,21 @@ export function InteractiveNebulaShader({
       disableCenterDimming: { value: disableCenterDimming },
     };
 
-    const material = new THREE.ShaderMaterial({ 
+    material = new THREE.ShaderMaterial({ 
       vertexShader, 
       fragmentShader, 
       uniforms,
       transparent: true 
     });
     materialRef.current = material;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
     scene.add(mesh);
 
     // Resize & mouse
     const onResize = () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
-      renderer.setSize(w, h);
+      if (renderer) renderer.setSize(w, h);
       uniforms.iResolution.value.set(w, h);
     };
     const onMouseMove = (e: MouseEvent) => {
@@ -157,14 +177,20 @@ export function InteractiveNebulaShader({
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("mousemove", onMouseMove);
-      renderer.setAnimationLoop(null);
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
+      if (renderer) {
+          renderer.setAnimationLoop(null);
+          if (container.contains(renderer.domElement)) {
+            container.removeChild(renderer.domElement);
+          }
+          renderer.dispose();
       }
-      material.dispose();
-      mesh.geometry.dispose();
-      renderer.dispose();
+      if (material) material.dispose();
+      if (mesh) mesh.geometry.dispose();
     };
+    } catch (e) {
+      console.error("Three.js initialization failed", e);
+      return;
+    }
   }, []);
 
   return (

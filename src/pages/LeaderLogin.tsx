@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, Eye, EyeOff, UserCircle, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LeaderLogin = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,30 @@ const LeaderLogin = () => {
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, isLoading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) return;
+      
+      const demoAuth = sessionStorage.getItem('demo_auth');
+      if (demoAuth) {
+        setUserRole(JSON.parse(demoAuth).role);
+        return;
+      }
+
+      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      setUserRole(data?.role || null);
+    };
+    checkRole();
+  }, [user]);
+
+  if (!isLoading && user && userRole) {
+    if (userRole === 'admin') return <Navigate to="/portal/admin/dashboard" replace />;
+    if (userRole === 'leader') return <Navigate to="/portal/leader/dashboard" replace />;
+    if (userRole === 'client') return <Navigate to="/portal/dashboard" replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

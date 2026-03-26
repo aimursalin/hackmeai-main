@@ -1,14 +1,39 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 import StepCard from "@/components/ui/step-card";
 import { useToast } from "@/hooks/use-toast";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const PortalLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, isLoading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) return;
+      
+      const demoAuth = sessionStorage.getItem('demo_auth');
+      if (demoAuth) {
+        setUserRole(JSON.parse(demoAuth).role);
+        return;
+      }
+
+      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      setUserRole(data?.role || null);
+    };
+    checkRole();
+  }, [user]);
+
+  if (!isLoading && user && userRole) {
+    if (userRole === 'admin') return <Navigate to="/portal/admin/dashboard" replace />;
+    if (userRole === 'leader') return <Navigate to="/portal/leader/dashboard" replace />;
+    if (userRole === 'client') return <Navigate to="/portal/dashboard" replace />;
+  }
 
   const triggerDemo = () => {
     sessionStorage.setItem('demo_auth', JSON.stringify({ id: 'demo-client-id', email: 'client@hackmeai.com', role: 'client', full_name: 'Demo Client' }));

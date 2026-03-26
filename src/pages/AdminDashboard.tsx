@@ -231,7 +231,7 @@ const AdminDashboard = () => {
         <div className="mt-6">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex flex-col">
-                  <h2 className="text-2xl font-extrabold text-white tracking-tight leading-none">Intelligence Feed</h2>
+                  <h2 className="text-2xl font-extrabold text-white tracking-tight leading-none">Psycho's Admin</h2>
                   <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] mt-1.5">Active Data Pipelines</p>
                 </div>
                 <div className="flex gap-3 text-[10px] font-bold uppercase tracking-widest text-white/40">
