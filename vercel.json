@@ -1,15 +1,6 @@
 {
   "trailingSlash": false,
-  "redirects": [
-    { "source": "/client/:path*", "destination": "/portal/:path*", "permanent": true },
-    { "source": "/admin/:path*", "destination": "/portal/admin/:path*", "permanent": true },
-    { "source": "/leader/:path*", "destination": "/portal/leader/:path*", "permanent": true },
-    { "source": "/dashboard/:path*", "destination": "/portal/dashboard/:path*", "permanent": true }
-  ],
   "rewrites": [
-    {
-      "source": "/((?!assets/|favicon.ico|robots.txt).*).*",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
